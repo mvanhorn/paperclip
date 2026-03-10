@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, not, inArray } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
 import { agents, heartbeatRuns } from "@paperclipai/db";
 import { logger } from "../middleware/logger.js";
@@ -145,10 +145,12 @@ async function checkConsecutiveNoProgress(
   const allNoProgress = recentRuns.every((r) => {
     const result = r.resultJson as Record<string, unknown> | null;
     if (!result) return true;
-    const issuesModified = Number(result.issuesModified ?? result.issuesMoved ?? 0);
-    const issuesCreated = Number(result.issuesCreated ?? 0);
-    const commentsPosted = Number(result.commentsPosted ?? 0);
-    return issuesModified === 0 && issuesCreated === 0 && commentsPosted === 0;
+    // Treat any key with a positive numeric value as progress, so new
+    // adapter output fields (pullRequestsOpened, filesChanged, etc.)
+    // are automatically recognized without updating this list.
+    return !Object.values(result).some(
+      (v) => typeof v === "number" && v > 0,
+    );
   });
 
   if (allNoProgress) {
@@ -170,27 +172,23 @@ async function checkTokenVelocity(
   agentId: string,
   config: CircuitBreakerConfig,
 ): Promise<CircuitBreakerResult> {
-  // Get the last 20 runs to compute a rolling average
+  // Get the last 20 runs regardless of outcome so expensive failed/timed_out
+  // runs are included in the velocity calculation.
   const recentRuns = await db
     .select({ usageJson: heartbeatRuns.usageJson })
     .from(heartbeatRuns)
-    .where(
-      and(
-        eq(heartbeatRuns.agentId, agentId),
-        eq(heartbeatRuns.status, "succeeded"),
-      ),
-    )
+    .where(eq(heartbeatRuns.agentId, agentId))
     .orderBy(desc(heartbeatRuns.createdAt))
     .limit(20);
 
   // Need at least 5 data points for a meaningful average
   if (recentRuns.length < 5) return { tripped: false };
 
+  // Use raw USD floats for comparison to avoid rounding sub-cent runs to 0
   const costs = recentRuns.map((r) => {
     const usage = r.usageJson as Record<string, unknown> | null;
     if (!usage) return 0;
-    const costUsd = Number(usage.costUsd ?? 0);
-    return Math.round(costUsd * 100); // cents
+    return Number(usage.costUsd ?? 0);
   });
 
   const latestCost = costs[0];
@@ -209,8 +207,8 @@ async function checkTokenVelocity(
       tripped: true,
       reason: "token_velocity_spike",
       details: {
-        latestCostCents: latestCost,
-        averageCostCents: Math.round(avgCost),
+        latestCostCents: Math.round(latestCost * 100),
+        averageCostCents: Math.round(avgCost * 100),
         ratio: Number(ratio.toFixed(2)),
         threshold: config.tokenVelocityMultiplier,
       },
@@ -228,26 +226,29 @@ export async function tripCircuitBreaker(
   agentId: string,
   result: CircuitBreakerResult,
 ) {
-  const agent = await db
-    .select()
-    .from(agents)
-    .where(eq(agents.id, agentId))
+  // Atomic compare-and-swap: only pause if not already paused/terminated.
+  // This avoids the TOCTOU race where a concurrent resume or another
+  // circuit breaker call could change status between SELECT and UPDATE.
+  const updated = await db
+    .update(agents)
+    .set({ status: "paused", updatedAt: new Date() })
+    .where(
+      and(
+        eq(agents.id, agentId),
+        not(inArray(agents.status, ["paused", "terminated"])),
+      ),
+    )
+    .returning()
     .then((rows) => rows[0] ?? null);
 
-  if (!agent) return;
-
-  // Don't trip if already paused/terminated
-  if (agent.status === "paused" || agent.status === "terminated") return;
+  if (!updated) return;
 
   logger.warn(
-    { agentId, agentName: agent.name, reason: result.reason, details: result.details },
+    { agentId, agentName: updated.name, reason: result.reason, details: result.details },
     "circuit breaker tripped - pausing agent",
   );
 
-  await db
-    .update(agents)
-    .set({ status: "paused", updatedAt: new Date() })
-    .where(eq(agents.id, agentId));
+  const agent = updated;
 
   await logActivity(db, {
     companyId: agent.companyId,
