@@ -316,9 +316,12 @@ export const MarkdownEditor = forwardRef<MarkdownEditorRef, MarkdownEditorProps>
         link.dataset.agentMention = "true";
         link.classList.add("paperclip-project-mention-chip");
         link.setAttribute("contenteditable", "false");
-        // Agent mentions use a neutral style
-        link.style.borderColor = "#6b7280";
-        link.style.backgroundColor = "rgba(107, 114, 128, 0.15)";
+        // Agent mentions use theme-aware muted colors via CSS variables
+        const root = getComputedStyle(document.documentElement);
+        const border = root.getPropertyValue("--border").trim();
+        const muted = root.getPropertyValue("--muted-foreground").trim();
+        link.style.borderColor = border ? `hsl(${border})` : "";
+        link.style.backgroundColor = muted ? `hsl(${muted} / 0.15)` : "";
         link.style.color = "";
       } else {
         if (link.dataset.projectMention === "true" || link.dataset.agentMention === "true") {
