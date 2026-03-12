@@ -9,6 +9,7 @@ import {
   agentWakeupRequests,
   heartbeatRunEvents,
   heartbeatRuns,
+  issueComments,
   issues,
   projects,
   projectWorkspaces,
@@ -1581,6 +1582,38 @@ export function heartbeatService(db: Db) {
           },
         });
         await releaseIssueExecutionAndPromote(finalizedRun);
+      }
+
+      // Auto-post agent's text output as an issue comment when the run
+      // succeeds and has an associated issue.  This ensures the agent's
+      // response is visible in the issue thread even when the agent
+      // itself did not call the comment API (e.g. --print mode).
+      if (outcome === "succeeded" && issueId && stdoutExcerpt.trim()) {
+        try {
+          // Check if the agent already posted a comment during this run
+          // to avoid duplicating the output.
+          const existingComments = await db
+            .select({ id: issueComments.id })
+            .from(issueComments)
+            .where(
+              and(
+                eq(issueComments.issueId, issueId),
+                eq(issueComments.authorAgentId, agent.id),
+                gt(issueComments.createdAt, run.startedAt ?? run.createdAt),
+              ),
+            )
+            .limit(1);
+          if (existingComments.length === 0) {
+            await issuesSvc.addComment(issueId, stdoutExcerpt.trim(), {
+              agentId: agent.id,
+            });
+          }
+        } catch (err) {
+          logger.warn(
+            { err, runId: run.id, issueId },
+            "failed to auto-post run output as issue comment",
+          );
+        }
       }
 
       if (finalizedRun) {
