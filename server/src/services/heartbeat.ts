@@ -2445,7 +2445,8 @@ export function heartbeatService(db: Db) {
               eq(issues.assigneeAgentId, agent.id),
               inArray(issues.status, ["todo", "in_progress", "blocked"]),
             ),
-          );
+          )
+          .orderBy(asc(issues.createdAt));
 
         const run = await enqueueWakeup(agent.id, {
           source: "timer",
