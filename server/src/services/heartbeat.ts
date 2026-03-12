@@ -1584,16 +1584,25 @@ export function heartbeatService(db: Db) {
         await releaseIssueExecutionAndPromote(finalizedRun);
       }
 
-      // Auto-post agent's text output as an issue comment when the run
-      // succeeds and has an associated issue.  This ensures the agent's
-      // response is visible in the issue thread even when the agent
-      // itself did not call the comment API (e.g. --print mode).
-      if (outcome === "succeeded" && issueId && stdoutExcerpt.trim()) {
+      // Auto-post agent's text output as an issue comment when a
+      // claude_local run succeeds with an associated issue.  This
+      // ensures the agent's response is visible in the issue thread
+      // even when the agent itself did not call the comment API
+      // (e.g. --print mode).  Other adapter types may produce
+      // machine-readable output (JSON, XML) that should not be posted.
+      if (
+        outcome === "succeeded" &&
+        agent.adapterType === "claude_local" &&
+        issueId &&
+        stdoutExcerpt.trim()
+      ) {
         try {
-          // Check if the agent already posted a comment during this run
-          // to avoid duplicating the output.
+          // Check if the agent already posted a substantive comment
+          // during this run to avoid duplicating the output.  Exclude
+          // system-generated workspace-ready comments (they start with
+          // "## Workspace Ready") since those are not agent output.
           const existingComments = await db
-            .select({ id: issueComments.id })
+            .select({ id: issueComments.id, body: issueComments.body })
             .from(issueComments)
             .where(
               and(
@@ -1601,10 +1610,17 @@ export function heartbeatService(db: Db) {
                 eq(issueComments.authorAgentId, agent.id),
                 gt(issueComments.createdAt, run.startedAt ?? run.createdAt),
               ),
-            )
-            .limit(1);
-          if (existingComments.length === 0) {
-            await issuesSvc.addComment(issueId, stdoutExcerpt.trim(), {
+            );
+          const hasAgentComment = existingComments.some(
+            (c) => !c.body.startsWith("## Workspace Ready"),
+          );
+          if (!hasAgentComment) {
+            const trimmed = stdoutExcerpt.trim();
+            const body =
+              trimmed.length >= MAX_EXCERPT_BYTES
+                ? `_(output truncated to last 32 KB)_\n\n${trimmed}`
+                : trimmed;
+            await issuesSvc.addComment(issueId, body, {
               agentId: agent.id,
             });
           }
