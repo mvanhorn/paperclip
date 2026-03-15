@@ -94,6 +94,7 @@ export function PluginManager() {
   const directoryQuery = useQuery({
     queryKey: queryKeys.plugins.directory,
     queryFn: () => pluginsApi.directory(),
+    staleTime: Infinity,
   });
 
   const invalidatePluginQueries = () => {
@@ -161,18 +162,18 @@ export function PluginManager() {
     [installedPlugins]
   );
 
-  const directoryEntries = directoryQuery.data ?? [];
   const filteredDirectory = useMemo(() => {
-    if (!directorySearch.trim()) return directoryEntries;
+    const entries = directoryQuery.data ?? [];
+    if (!directorySearch.trim()) return entries;
     const q = directorySearch.toLowerCase();
-    return directoryEntries.filter(
+    return entries.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
         p.author.toLowerCase().includes(q),
     );
-  }, [directoryEntries, directorySearch]);
+  }, [directoryQuery.data, directorySearch]);
 
   if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Loading plugins...</div>;
   if (error) return <div className="p-4 text-sm text-destructive">Failed to load plugins.</div>;

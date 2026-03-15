@@ -160,14 +160,18 @@ function listBundledPluginExamples(): AvailablePluginExample[] {
 
 const DIRECTORY_PATH = path.resolve(REPO_ROOT, "doc/plugins/directory.json");
 
+const DIRECTORY_CACHE_TTL_MS = 5 * 60 * 1000;
+
 let directoryCache: DirectoryPlugin[] | null = null;
+let directoryCacheExpiry = 0;
 
 function loadPluginDirectory(): DirectoryPlugin[] {
-  if (directoryCache) return directoryCache;
+  if (directoryCache && Date.now() < directoryCacheExpiry) return directoryCache;
   try {
     const raw = readFileSync(DIRECTORY_PATH, "utf-8");
     const parsed = JSON.parse(raw) as { plugins?: DirectoryPlugin[] };
     directoryCache = parsed.plugins ?? [];
+    directoryCacheExpiry = Date.now() + DIRECTORY_CACHE_TTL_MS;
     return directoryCache;
   } catch {
     return [];
@@ -430,7 +434,7 @@ export function pluginRoutes(
    * Return the community plugin directory for browsing and one-click install.
    * Reads from doc/plugins/directory.json (cached in memory after first read).
    */
-  router.get("/plugins/directory", async (req, res) => {
+  router.get("/plugins/directory", (req, res) => {
     assertBoard(req);
     res.json(loadPluginDirectory());
   });
