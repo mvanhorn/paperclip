@@ -3921,6 +3921,7 @@ export function heartbeatService(db: Db) {
       let checked = 0;
       let enqueued = 0;
       let skipped = 0;
+      let idleSkipped = 0;
 
       for (const agent of allAgents) {
         if (agent.status === "paused" || agent.status === "terminated" || agent.status === "pending_approval") continue;
@@ -3939,12 +3940,12 @@ export function heartbeatService(db: Db) {
               and(
                 eq(issues.companyId, agent.companyId),
                 eq(issues.assigneeAgentId, agent.id),
-                inArray(issues.status, ["backlog", "todo", "in_progress", "in_review", "blocked"]),
+                inArray(issues.status, ["backlog", "todo", "in_progress", "in_review", "blocked"]), // keep in sync with OPEN_ISSUE_STATUSES in routines.ts
               ),
             );
 
           if (Number(openIssueCount ?? 0) === 0) {
-            skipped += 1;
+            idleSkipped += 1;
             await db
               .update(agents)
               .set({ lastHeartbeatAt: now, updatedAt: now })
@@ -3969,7 +3970,7 @@ export function heartbeatService(db: Db) {
         else skipped += 1;
       }
 
-      return { checked, enqueued, skipped };
+      return { checked, enqueued, skipped, idleSkipped };
     },
 
     cancelRun: (runId: string) => cancelRunInternal(runId),
