@@ -1433,7 +1433,12 @@ export function routineService(db: Db, deps: { heartbeat?: IssueAssignmentWakeup
         let runCount = 1;
         let claimedNextRunAt = nextCronTickInTimeZone(row.trigger.cronExpression, row.trigger.timezone, now);
 
-        if (row.routine.catchUpPolicy === "enqueue_missed_with_cap") {
+        if (row.routine.catchUpPolicy === "skip_missed") {
+          runCount = 0;
+          console.warn(
+            `scheduler: skipping missed run for routine ${row.routine.id} (catchUpPolicy: skip_missed, nextRunAt was ${row.trigger.nextRunAt.toISOString()})`,
+          );
+        } else if (row.routine.catchUpPolicy === "enqueue_missed_with_cap") {
           let cursor: Date | null = row.trigger.nextRunAt;
           runCount = 0;
           while (cursor && cursor <= now && runCount < MAX_CATCH_UP_RUNS) {
