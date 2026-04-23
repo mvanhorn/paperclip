@@ -1,6 +1,18 @@
-import { execFileSync, type ExecFileSyncOptions } from "node:child_process";
+import {
+  execFileSync,
+  type ExecFileSyncOptions,
+  type ExecFileSyncOptionsWithStringEncoding,
+} from "node:child_process";
 
-export function execGitSync(args: string[], options: ExecFileSyncOptions = {}) {
+export function execGitSync(
+  args: string[],
+  options: ExecFileSyncOptionsWithStringEncoding,
+): string;
+export function execGitSync(args: string[], options?: ExecFileSyncOptions): Buffer;
+export function execGitSync(
+  args: string[],
+  options: ExecFileSyncOptions = {},
+): string | Buffer {
   return execFileSync("git", args, {
     ...options,
     env: {
