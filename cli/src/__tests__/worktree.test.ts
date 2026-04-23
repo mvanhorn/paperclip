@@ -1,7 +1,6 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -48,6 +47,7 @@ import {
   getEmbeddedPostgresTestSupport,
   startEmbeddedPostgresTestDatabase,
 } from "./helpers/embedded-postgres.js";
+import { execGitSync } from "./helpers/git.js";
 
 const ORIGINAL_CWD = process.cwd();
 const ORIGINAL_ENV = { ...process.env };
@@ -992,6 +992,29 @@ describe("worktree helpers", () => {
     ).toBeNull();
   });
 
+  it("ignores inherited global hooksPath when creating temp git repos", () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-hooks-isolation-"));
+    const repoRoot = path.join(tempRoot, "repo");
+    const fakeGlobalConfigPath = path.join(tempRoot, "global-gitconfig");
+
+    try {
+      fs.mkdirSync(repoRoot, { recursive: true });
+      fs.writeFileSync(fakeGlobalConfigPath, "[core]\n\thooksPath = /tmp/blocked-hooks\n", "utf8");
+      process.env.GIT_CONFIG_GLOBAL = fakeGlobalConfigPath;
+
+      execGitSync(["init"], { cwd: repoRoot, stdio: "ignore" });
+      const hooksPath = execGitSync(["rev-parse", "--git-path", "hooks"], {
+        cwd: repoRoot,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }).trim();
+
+      expect(path.resolve(repoRoot, hooksPath)).toBe(path.join(repoRoot, ".git", "hooks"));
+    } finally {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
   it("copies shared git hooks into a linked worktree git dir", () => {
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "paperclip-worktree-hooks-"));
     const repoRoot = path.join(tempRoot, "repo");
@@ -999,12 +1022,12 @@ describe("worktree helpers", () => {
 
     try {
       fs.mkdirSync(repoRoot, { recursive: true });
-      execFileSync("git", ["init"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["init"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
       fs.writeFileSync(path.join(repoRoot, "README.md"), "# temp\n", "utf8");
-      execFileSync("git", ["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
 
       const sourceHooksDir = path.join(repoRoot, ".git", "hooks");
       const sourceHookPath = path.join(sourceHooksDir, "pre-commit");
@@ -1013,10 +1036,10 @@ describe("worktree helpers", () => {
       fs.chmodSync(sourceHookPath, 0o755);
       fs.writeFileSync(sourceTokensPath, "secret-token\n", "utf8");
 
-      execFileSync("git", ["worktree", "add", "--detach", worktreePath], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["worktree", "add", "--detach", worktreePath], { cwd: repoRoot, stdio: "ignore" });
 
       const copied = copyGitHooksToWorktreeGitDir(worktreePath);
-      const worktreeGitDir = execFileSync("git", ["rev-parse", "--git-dir"], {
+      const worktreeGitDir = execGitSync(["rev-parse", "--git-dir"], {
         cwd: worktreePath,
         encoding: "utf8",
         stdio: ["ignore", "pipe", "ignore"],
@@ -1035,7 +1058,7 @@ describe("worktree helpers", () => {
       expect(fs.statSync(targetHookPath).mode & 0o111).not.toBe(0);
       expect(fs.readFileSync(targetTokensPath, "utf8")).toBe("secret-token\n");
     } finally {
-      execFileSync("git", ["worktree", "remove", "--force", worktreePath], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["worktree", "remove", "--force", worktreePath], { cwd: repoRoot, stdio: "ignore" });
       fs.rmSync(tempRoot, { recursive: true, force: true });
     }
   }, 15_000);
@@ -1051,12 +1074,12 @@ describe("worktree helpers", () => {
     try {
       fs.mkdirSync(repoRoot, { recursive: true });
       fs.mkdirSync(fakeHome, { recursive: true });
-      execFileSync("git", ["init"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["init"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
       fs.writeFileSync(path.join(repoRoot, "README.md"), "# temp\n", "utf8");
-      execFileSync("git", ["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
 
       process.chdir(repoRoot);
 
@@ -1082,12 +1105,12 @@ describe("worktree helpers", () => {
 
     try {
       fs.mkdirSync(repoRoot, { recursive: true });
-      execFileSync("git", ["init"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["init"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
       fs.writeFileSync(path.join(repoRoot, "README.md"), "# temp\n", "utf8");
-      execFileSync("git", ["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
 
       process.chdir(repoRoot);
       await worktreeRepairCommand({});
@@ -1115,14 +1138,14 @@ describe("worktree helpers", () => {
 
     try {
       fs.mkdirSync(repoRoot, { recursive: true });
-      execFileSync("git", ["init"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["init"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
       fs.writeFileSync(path.join(repoRoot, "README.md"), "# temp\n", "utf8");
-      execFileSync("git", ["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
       fs.mkdirSync(path.dirname(worktreePath), { recursive: true });
-      execFileSync("git", ["worktree", "add", "-b", "repair-me", worktreePath, "HEAD"], {
+      execGitSync(["worktree", "add", "-b", "repair-me", worktreePath, "HEAD"], {
         cwd: repoRoot,
         stdio: "ignore",
       });
@@ -1157,12 +1180,12 @@ describe("worktree helpers", () => {
 
     try {
       fs.mkdirSync(repoRoot, { recursive: true });
-      execFileSync("git", ["init"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["init"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["config", "user.email", "test@example.com"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["config", "user.name", "Test User"], { cwd: repoRoot, stdio: "ignore" });
       fs.writeFileSync(path.join(repoRoot, "README.md"), "# temp\n", "utf8");
-      execFileSync("git", ["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
-      execFileSync("git", ["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["add", "README.md"], { cwd: repoRoot, stdio: "ignore" });
+      execGitSync(["commit", "-m", "Initial commit"], { cwd: repoRoot, stdio: "ignore" });
       fs.writeFileSync(sourceConfigPath, JSON.stringify(buildSourceConfig(), null, 2), "utf8");
 
       process.chdir(repoRoot);
