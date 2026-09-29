@@ -1,5 +1,6 @@
 import { aiConnectionBindingSchema } from "../ai-connections.js";
 import { z } from "zod";
+import { activeHoursWindowSchema } from "../active-hours.js";
 import {
   AGENT_ICON_NAMES,
   AGENT_ROLES,
@@ -65,6 +66,11 @@ export const agentRuntimeConfigSchema = z.object({
   debug: z.object({
     providerTrace: z.literal("raw").optional(),
   }).strict().optional(),
+  heartbeat: z.object({
+    enabled: z.boolean().optional(),
+    intervalSec: z.number().optional(),
+    activeHours: activeHoursWindowSchema.nullable().optional(),
+  }).catchall(z.unknown()).optional(),
 }).catchall(z.unknown()).superRefine((value, ctx) => {
   if (Object.prototype.hasOwnProperty.call(value, "modelProfiles")) {
     ctx.addIssue({
