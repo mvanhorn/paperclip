@@ -1,0 +1,239 @@
+{
+  "repo": "paperclipai/paperclip",
+  "status": "ok",
+  "plans_written": 2,
+  "plan_files": [
+    ".osc-plans/2026-09-29-111-feat-heartbeat-active-hours-plan.md",
+    ".osc-plans/2026-09-29-112-feat-skill-coverage-matrix-plan.md"
+  ],
+  "chosen_features": [
+    {
+      "title": "feat: timer heartbeat active hours",
+      "plan_file": ".osc-plans/2026-09-29-111-feat-heartbeat-active-hours-plan.md",
+      "deep_rubric_score": 9,
+      "complexity": "M",
+      "source": "novel:cross-ref",
+      "pre_plan_score": 9,
+      "post_plan_score": 9,
+      "citations": [
+        { "kind": "competitor", "id": "cap-heartbeat-window", "competitor": "openclaw/openclaw" },
+        { "kind": "competitor", "id": "cap-unattended-cron", "competitor": "iofficeai/aionui" },
+        { "kind": "social", "id": "signal-youtube-tutorial" },
+        { "kind": "social", "id": "signal-r-paperclip-tips" }
+      ],
+      "open_issue_overlap": []
+    },
+    {
+      "title": "feat: company skill coverage matrix",
+      "plan_file": ".osc-plans/2026-09-29-112-feat-skill-coverage-matrix-plan.md",
+      "deep_rubric_score": 8,
+      "complexity": "M",
+      "source": "novel:cross-ref",
+      "pre_plan_score": 8,
+      "post_plan_score": 8,
+      "citations": [
+        { "kind": "competitor", "id": "cap-team-capability-board", "competitor": "iofficeai/aionui" },
+        { "kind": "competitor", "id": "cap-control-plane-lifecycle", "competitor": "lyzr-ai/agent-control-plane" },
+        { "kind": "social", "id": "signal-r-paperclip-enterprise" },
+        { "kind": "social", "id": "signal-r-paperclip-tips" }
+      ],
+      "open_issue_overlap": []
+    }
+  ],
+  "novel_pool": [
+    {
+      "title": "feat: timer heartbeat active hours",
+      "category": 1,
+      "deep_rubric_score": 9,
+      "selected": true
+    },
+    {
+      "title": "feat: company skill coverage matrix",
+      "category": 1,
+      "deep_rubric_score": 8,
+      "selected": true
+    },
+    {
+      "title": "feat: board approval batch resolve",
+      "category": 1,
+      "deep_rubric_score": 7,
+      "selected": false
+    },
+    {
+      "title": "feat: secret rotation staleness inbox",
+      "category": 1,
+      "deep_rubric_score": 7,
+      "selected": false
+    },
+    {
+      "title": "feat: human issue watchers",
+      "category": 1,
+      "deep_rubric_score": 7,
+      "selected": false
+    },
+    {
+      "title": "feat: soft work-product completeness gate",
+      "category": 1,
+      "deep_rubric_score": 6,
+      "selected": false
+    },
+    {
+      "title": "feat: cross-issue review hop circuit",
+      "category": 3,
+      "deep_rubric_score": 7,
+      "selected": false,
+      "drop_reason": "overlaps existing same-issue maxReviewRounds plus open loop issues 5713/390/8210; execution-semantics core work"
+    }
+  ],
+  "category_1_quota": {
+    "cat1": 6,
+    "cat3": 1,
+    "score": 7,
+    "threshold": 6,
+    "quota_met": true
+  },
+  "autonomous_check_inputs": {
+    "pre_plan_score": 9,
+    "post_plan_score": 9,
+    "PROCESS_LEVEL": "PR_WELCOME",
+    "NO_AI_OPPOSED": true,
+    "NO_COMPETING_PRS": true,
+    "HAS_PRECEDENT": true,
+    "WARMTH_SCORE": 2,
+    "OPEN_PRS_AUTHORED": 6,
+    "REPO_OPEN_PRS_TOTAL": 3467,
+    "IS_OWN_PROJECT": false
+  },
+  "quick_fixes": [
+    {
+      "title": "Board cannot send messages / composer error on Paperclip community reports",
+      "note": "run /osc-plan — social r/PaperClip_AI thread, not a novel feature"
+    },
+    {
+      "title": "GitHub connection failure on community reports",
+      "note": "run /osc-plan — connector bug, not a novel feature"
+    },
+    {
+      "title": "heartbeat.enabled=true silently does nothing when intervalSec is unset",
+      "note": "run /osc-plan — GitHub issue 10769"
+    },
+    {
+      "title": "heartbeat_timer wakes with zero assigned work: distinct idle reason or skip",
+      "note": "run /osc-plan — GitHub issue 8015"
+    }
+  ],
+  "social_pass": {
+    "repo": "paperclipai/paperclip",
+    "topic": "paperclip",
+    "topic_source": "package_json_name",
+    "competitors": [],
+    "competitor_coverage": "skipped_pre_step3",
+    "invoked": true,
+    "status": "ok",
+    "gate": "passed",
+    "reason": null,
+    "engine": {
+      "kind": "active_skill",
+      "script": "/Users/mvanhorn/.claude/skills/osc-newfeature/scripts/social_search.py",
+      "argv": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Users/mvanhorn/.claude/skills/osc-newfeature/scripts/social_search.py"
+      ]
+    },
+    "signals": {
+      "total": 62,
+      "main": 62,
+      "competitors": 0
+    },
+    "source_coverage": {
+      "searched": ["tiktok", "reddit", "youtube"],
+      "failed": {
+        "x": "HTTPError: 404 Client Error: Not Found for url: https://api.scrapecreators.com/v1/twitter/search/tweets?query=paperclip&sort_by=relevance"
+      }
+    },
+    "completed_at": "2026-09-29T14:37:52.085973+00:00",
+    "provenance": "host_handoff"
+  },
+  "skipped_reasons": {},
+  "proposal_lane": false,
+  "open_issue_index": [
+    { "number": 8428, "title": "Add Task scheduling/Start time to utilize unused credits at night.", "state": "open", "overlap": "related_not_same — issue wants issue start-at clock time, not timer active hours" },
+    { "number": 8015, "title": "heartbeat_timer wakes with zero assigned work: surface a distinct idle wake reason (or skip the wake)", "state": "open", "overlap": "none" },
+    { "number": 10769, "title": "heartbeat.enabled=true silently does nothing when intervalSec is unset", "state": "open", "overlap": "none" },
+    { "number": 7257, "title": "Feature Request: API endpoint to assign skills to agents programmatically", "state": "open", "overlap": "none — sync API already exists; coverage is a read/view" },
+    { "number": 9551, "title": "Skill sync silently no-ops when desiredSkills reference a missing local registry", "state": "open", "overlap": "none" },
+    { "number": 5713, "title": "Feature: detect agent run-loops (oscillation on agent+issue+wakeReason)", "state": "open", "overlap": "blocked_candidate — used to drop cross-issue review hop" },
+    { "number": 390, "title": "feat: Agent circuit breaker — automatic loop detection and token waste prevention", "state": "open", "overlap": "blocked_candidate — used to drop cross-issue review hop" },
+    { "number": 3236, "title": "Feature request: Board inbox filtering — hide agent run failures", "state": "open", "overlap": "none" },
+    { "number": 8638, "title": "feat(ui): add Needs Your Attention prioritization view to dashboard", "state": "open", "overlap": "none — Decisions desk already shipped; not selected" }
+  ],
+  "authored_open_prs_excluded": [
+    { "number": 9733, "title": "fix(auth): forbid board-key fallback on run-scoped agent requests" },
+    { "number": 4336, "title": "fix(tests): isolate temp git repos from host core.hooksPath" },
+    { "number": 4333, "title": "fix(server): degrade gracefully when budget rows reference deleted agents" },
+    { "number": 3135, "title": "fix(server): resolve managed workspace path in plugin host listWorkspaces" },
+    { "number": 3133, "title": "fix(server): respect catchUpPolicy skip_missed on scheduler tick" },
+    { "number": 377, "title": "fix(cli): add missing disableSignUp to auth config defaults" }
+  ],
+  "competitor_feature_matrix": {
+    "repo": "paperclipai/paperclip",
+    "assembled_after": "step_4",
+    "host_competitor_coverage": "skipped_pre_step3",
+    "competitors": [
+      {
+        "id": "openclaw/openclaw",
+        "name": "OpenClaw",
+        "caps": [
+          {
+            "id": "cap-heartbeat-window",
+            "name": "Configurable heartbeat cadence plus per-run cost budget",
+            "present_in_paperclip": "partial",
+            "gap": "Paperclip has intervalSec, maxDailyRuns, maxDailyCostCents; no wall-clock activeHours on timer ticks"
+          },
+          {
+            "id": "cap-self-verify-loop",
+            "name": "Opt-in verifier loop on heartbeat replies",
+            "present_in_paperclip": "different",
+            "gap": "Paperclip has execution-policy review rounds and retired productivity reviews; not selected"
+          }
+        ]
+      },
+      {
+        "id": "iofficeai/aionui",
+        "name": "AionUi",
+        "caps": [
+          {
+            "id": "cap-unattended-cron",
+            "name": "24/7 unattended cron automation",
+            "present_in_paperclip": "partial",
+            "gap": "Routines already cover cron; timer heartbeats have no daily window"
+          },
+          {
+            "id": "cap-team-capability-board",
+            "name": "Leader/teammate board with per-agent capability and permission state",
+            "present_in_paperclip": "partial",
+            "gap": "Per-agent Skills tab and per-skill usedByAgents exist; no company agents×skills coverage matrix"
+          }
+        ]
+      },
+      {
+        "id": "lyzr-ai/agent-control-plane",
+        "name": "Lyzr / generic agent control plane",
+        "caps": [
+          {
+            "id": "cap-control-plane-lifecycle",
+            "name": "Portfolio lifecycle and capability inventory across agents",
+            "present_in_paperclip": "partial",
+            "gap": "Org chart and skill library exist; no rollup of desired skill coverage"
+          },
+          {
+            "id": "cap-bulk-governance",
+            "name": "Bulk governance actions on pending approvals",
+            "present_in_paperclip": "partial",
+            "gap": "Single-approval resolve plus interaction-card bulk; company approval batch not selected (score 7)"
+          }
+        ]
+      }
+    ]
+  }
+}
