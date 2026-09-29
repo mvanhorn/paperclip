@@ -222,6 +222,9 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
                       {visibleSkills.map((skill) => {
                         const cell = cellMap.get(cellKey(agent.id, skill.key));
                         const kind = cellKind(cell);
+                        if (missingOnly && kind === "desired") {
+                          return <td key={skill.key} className="px-3 py-2" />;
+                        }
                         return (
                           <td key={skill.key} className="px-3 py-2">
                             <CoverageCell
@@ -258,6 +261,7 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
                     {visibleSkills.map((skill) => {
                       const cell = cellMap.get(cellKey(agent.id, skill.key));
                       const kind = cellKind(cell);
+                      if (missingOnly && kind === "desired") return null;
                       return (
                         <li key={skill.key}>
                           <CoverageCell

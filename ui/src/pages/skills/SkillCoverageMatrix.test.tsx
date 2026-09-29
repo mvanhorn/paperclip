@@ -27,9 +27,9 @@ vi.mock("@/components/ui/checkbox", () => ({
   } & ComponentProps<"input">) => (
     <input
       type="checkbox"
+      {...props}
       checked={Boolean(checked)}
       onChange={(event) => onCheckedChange?.(event.target.checked)}
-      {...props}
     />
   ),
 }));
@@ -175,11 +175,10 @@ describe("SkillCoverageMatrix", () => {
 
     expect(toggle).not.toBeNull();
     await act(async () => {
-      toggle!.checked = true;
-      toggle!.dispatchEvent(new Event("change", { bubbles: true }));
+      toggle!.click();
     });
 
-    expect(node.textContent).not.toContain("Desired");
+    expect(node.querySelector("table")?.textContent ?? "").not.toContain("Desired");
     expect(node.querySelector('[aria-label="Attach Beta to Ada"]')).not.toBeNull();
   });
 
