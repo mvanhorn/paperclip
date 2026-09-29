@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const HM_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+const HM_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 export interface ActiveHoursWindow {
   start: string;

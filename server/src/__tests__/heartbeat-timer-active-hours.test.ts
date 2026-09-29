@@ -1,12 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   agents,
   agentWakeupRequests,
   companies,
   createDb,
-  heartbeatRunEvents,
   heartbeatRuns,
 } from "@paperclipai/db";
 import {
@@ -75,11 +74,18 @@ describeEmbeddedPostgres("heartbeat timer active hours", () => {
     }));
     runningProcesses.clear();
     await drainHeartbeatRunsToQuiescence(db, heartbeat);
-    await db.delete(heartbeatRunEvents);
-    await db.delete(heartbeatRuns);
-    await db.delete(agentWakeupRequests);
-    await db.delete(agents);
-    await db.delete(companies);
+    await db.execute(sql.raw(`
+      TRUNCATE TABLE
+        "heartbeat_run_events",
+        "cost_events",
+        "activity_log",
+        "heartbeat_runs",
+        "agent_wakeup_requests",
+        "agent_runtime_state",
+        "agents",
+        "companies"
+      RESTART IDENTITY CASCADE
+    `));
   });
 
   afterAll(async () => {
