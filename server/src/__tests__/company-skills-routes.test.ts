@@ -18,6 +18,7 @@ const mockAccessService = vi.hoisted(() => ({
 const mockCompanySkillService = vi.hoisted(() => ({
   list: vi.fn(),
   categoryCounts: vi.fn(),
+  coverage: vi.fn(),
   detail: vi.fn(),
   listVersions: vi.fn(),
   getVersion: vi.fn(),
@@ -247,6 +248,18 @@ describe("company skill mutation permissions", () => {
     mockCatalogService.listCatalogSkillsOrEmpty.mockReturnValue([]);
     mockCompanySkillService.list.mockResolvedValue([]);
     mockCompanySkillService.categoryCounts.mockResolvedValue([]);
+    mockCompanySkillService.coverage.mockResolvedValue({
+      skills: [],
+      agents: [],
+      cells: [],
+      summary: {
+        agentCount: 0,
+        skillCount: 0,
+        desiredCellCount: 0,
+        gapCount: 0,
+        unsupportedAgentCount: 0,
+      },
+    });
     mockCompanySkillService.detail.mockResolvedValue(null);
     mockCompanySkillService.listVersions.mockResolvedValue([]);
     mockCompanySkillService.getVersion.mockResolvedValue(null);
@@ -1607,6 +1620,68 @@ describe("company skill mutation permissions", () => {
 
     await request(app).get("/api/companies/company-1/skills/categories").expect(200);
     expect(mockCompanySkillService.categoryCounts).toHaveBeenCalledWith("company-1");
+  });
+
+  it("reads company skill coverage without capturing coverage as a skill id", async () => {
+    const payload = {
+      skills: [{
+        id: "00000000-0000-4000-8000-000000000001",
+        key: "github-pr-workflow",
+        name: "GitHub PR workflow",
+        slug: "github-pr-workflow",
+      }],
+      agents: [],
+      cells: [],
+      summary: {
+        agentCount: 0,
+        skillCount: 1,
+        desiredCellCount: 0,
+        gapCount: 0,
+        unsupportedAgentCount: 0,
+      },
+    };
+    mockCompanySkillService.coverage.mockResolvedValue(payload);
+    const app = await createApp({ type: "board", source: "local_implicit" });
+
+    const res = await request(app)
+      .get("/api/companies/company-1/skills/coverage?q=cto&missingOnly=true")
+      .expect(200);
+
+    expect(res.body).toEqual(payload);
+    expect(mockCompanySkillService.coverage).toHaveBeenCalledWith("company-1", {
+      q: "cto",
+      missingOnly: true,
+    });
+    expect(mockCompanySkillService.detail).not.toHaveBeenCalled();
+  });
+
+  it("allows same-company agents to read coverage and denies other companies", async () => {
+    const allowed = await request(await createApp({
+      type: "agent",
+      agentId: "agent-1",
+      companyId: "company-1",
+    })).get("/api/companies/company-1/skills/coverage");
+    expect(allowed.status, JSON.stringify(allowed.body)).toBe(200);
+
+    const denied = await request(await createApp({
+      type: "agent",
+      agentId: "agent-2",
+      companyId: "company-2",
+    })).get("/api/companies/company-1/skills/coverage");
+    expect(denied.status, JSON.stringify(denied.body)).toBe(403);
+
+    const missingCompany = await request(await createApp({
+      type: "board",
+      source: "session",
+      companyIds: ["company-2"],
+      userId: "user-1",
+    })).get("/api/companies/company-1/skills/coverage");
+    expect(missingCompany.status, JSON.stringify(missingCompany.body)).toBe(403);
+
+    const anonymous = await request(await createApp({ type: "none" }))
+      .get("/api/companies/company-1/skills/coverage");
+    expect(anonymous.status, JSON.stringify(anonymous.body)).toBe(401);
+    expect(mockCompanySkillService.detail).not.toHaveBeenCalled();
   });
 
   it("accepts category updates and logs the skill mutation", async () => {
