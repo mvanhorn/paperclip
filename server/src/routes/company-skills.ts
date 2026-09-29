@@ -24,6 +24,7 @@ import {
   companySkillInstallCatalogSchema,
   companySkillInstallUpdateSchema,
   companySkillListQuerySchema,
+  companySkillCoverageQuerySchema,
   companySkillProjectBrowseRequestSchema,
   companySkillProjectScanRequestSchema,
   companySkillRenameSchema,
@@ -447,6 +448,18 @@ export function companySkillRoutes(db: Db) {
     const companyId = req.params.companyId as string;
     assertCompanyAccess(req, companyId);
     res.json(await svc.categoryCounts(companyId));
+  });
+
+  router.get("/companies/:companyId/skills/coverage", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    assertCompanyAccess(req, companyId);
+    const query = companySkillCoverageQuerySchema.parse({
+      q: firstQueryString(req.query.q),
+      missingOnly: firstQueryString(req.query.missingOnly),
+      skillKey: firstQueryString(req.query.skillKey),
+      agentId: firstQueryString(req.query.agentId),
+    });
+    res.json(await svc.coverage(companyId, query));
   });
 
   router.get("/companies/:companyId/skills/:skillId", async (req, res) => {
