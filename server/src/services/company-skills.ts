@@ -3555,6 +3555,7 @@ export function companySkillService(db: Db) {
     companyId: string,
     query: CompanySkillCoverageQuery = {},
   ): Promise<CompanySkillCoverageResponse> {
+    await ensureSkillInventoryCurrent(companyId);
     const referenceSkills = await listReferenceTargets(companyId);
     const skillRows = await db
       .select({

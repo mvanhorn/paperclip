@@ -48,12 +48,10 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
     mutationFn: async ({
       agentId,
       skillKey,
-      desiredKeys,
     }: {
       agentId: string;
       skillKey: string;
-      desiredKeys: string[];
-    }) => agentsApi.syncSkills(agentId, [...desiredKeys, skillKey], "add", companyId),
+    }) => agentsApi.syncSkills(agentId, [skillKey], "add", companyId),
     onSuccess: async (_snapshot, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.companySkills.list(companyId) }),
@@ -95,19 +93,9 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
     [missingOnly, payload, visibleSkillKeys],
   );
 
-  function desiredKeysForAgent(agentId: string) {
-    return (payload?.cells ?? [])
-      .filter((cell) => cell.agentId === agentId && cell.desired)
-      .map((cell) => cell.skillKey);
-  }
-
   function attachGap(agentId: string, skillKey: string) {
     if (attachSkill.isPending) return;
-    attachSkill.mutate({
-      agentId,
-      skillKey,
-      desiredKeys: desiredKeysForAgent(agentId),
-    });
+    attachSkill.mutate({ agentId, skillKey });
   }
 
   const summary = payload?.summary;
@@ -180,7 +168,12 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
             message={coverageQuery.error instanceof Error ? coverageQuery.error.message : "Could not load coverage."}
           />
         ) : !payload || (payload.skills.length === 0 && payload.agents.length === 0) ? (
-          <EmptyState icon={Grid2x2} message="No agents or installed skills to show." />
+          <EmptyState
+            icon={Grid2x2}
+            message={q
+              ? "No agents or skills match your search."
+              : "No agents or installed skills to show."}
+          />
         ) : visibleAgents.length === 0 || visibleSkills.length === 0 ? (
           <EmptyState icon={Grid2x2} message="No coverage cells match the current filters." />
         ) : (
