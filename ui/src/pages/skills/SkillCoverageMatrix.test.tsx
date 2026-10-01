@@ -193,6 +193,38 @@ describe("SkillCoverageMatrix", () => {
       attach!.click();
     });
 
-    expect(mockSyncSkills).toHaveBeenCalledWith(adaId, ["alpha", "beta"], "add", companyId);
+    expect(mockSyncSkills).toHaveBeenCalledWith(adaId, ["beta"], "add", companyId);
+  });
+
+  it("shows a search-specific empty state when nothing matches", async () => {
+    const emptyCoverage: CompanySkillCoverageResponse = {
+      skills: [],
+      agents: [],
+      cells: [],
+      summary: {
+        agentCount: 0,
+        skillCount: 0,
+        desiredCellCount: 0,
+        gapCount: 0,
+        unsupportedAgentCount: 0,
+      },
+    };
+    mockCoverage.mockImplementation(async (_companyId: string, query?: { q?: string }) => (
+      query?.q ? emptyCoverage : coveragePayload
+    ));
+    const node = await renderMatrix();
+    const input = node.querySelector<HTMLInputElement>('input[aria-label="Filter agents or skills"]');
+
+    expect(input).not.toBeNull();
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+      setter?.call(input, "zzzz-no-match");
+      input!.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    await vi.waitFor(() => {
+      expect(node.textContent).toContain("No agents or skills match your search.");
+    });
+    expect(node.textContent).not.toContain("No agents or installed skills to show.");
   });
 });

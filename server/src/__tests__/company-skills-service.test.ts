@@ -3478,6 +3478,12 @@ describeEmbeddedPostgres("companySkillService.list", () => {
     const zedId = randomUUID();
     const alphaKey = `company/${companyId}/alpha`;
     const betaKey = `company/${companyId}/beta`;
+    const alphaDir = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-coverage-alpha-"));
+    const betaDir = await fs.mkdtemp(path.join(os.tmpdir(), "paperclip-coverage-beta-"));
+    cleanupDirs.add(alphaDir);
+    cleanupDirs.add(betaDir);
+    await fs.writeFile(path.join(alphaDir, "SKILL.md"), "---\nname: Alpha\n---\n\n# Alpha\n", "utf8");
+    await fs.writeFile(path.join(betaDir, "SKILL.md"), "---\nname: Beta\n---\n\n# Beta\n", "utf8");
     await db.insert(companySkills).values([
       {
         id: alphaId,
@@ -3488,7 +3494,7 @@ describeEmbeddedPostgres("companySkillService.list", () => {
         description: null,
         markdown: "# Alpha\n",
         sourceType: "local_path",
-        sourceLocator: "/tmp/alpha",
+        sourceLocator: alphaDir,
         trustLevel: "markdown_only",
         compatibility: "compatible",
         fileInventory: [{ path: "SKILL.md", kind: "skill" }],
@@ -3502,7 +3508,7 @@ describeEmbeddedPostgres("companySkillService.list", () => {
         description: null,
         markdown: "# Beta\n",
         sourceType: "local_path",
-        sourceLocator: "/tmp/beta",
+        sourceLocator: betaDir,
         trustLevel: "markdown_only",
         compatibility: "compatible",
         fileInventory: [{ path: "SKILL.md", kind: "skill" }],
@@ -3551,8 +3557,8 @@ describeEmbeddedPostgres("companySkillService.list", () => {
 
       expect(listSkills).not.toHaveBeenCalled();
     expect(result.agents.map((agent) => agent.name)).toEqual(["Ada", "Bea"]);
-    expect(result.skills.map((skill) => skill.key)).toEqual([alphaKey, betaKey]);
-    expect(result.cells).toHaveLength(4);
+    expect(result.skills.map((skill) => skill.key)).toEqual(expect.arrayContaining([alphaKey, betaKey]));
+    expect(result.cells).toHaveLength(result.agents.length * result.skills.length);
     expect(result.cells.every((cell) => cell.actualState === null)).toBe(true);
     expect(result.cells).toEqual(expect.arrayContaining([
       expect.objectContaining({
@@ -3576,15 +3582,15 @@ describeEmbeddedPostgres("companySkillService.list", () => {
     ]));
     expect(result.summary).toEqual({
       agentCount: 2,
-      skillCount: 2,
+      skillCount: result.skills.length,
       desiredCellCount: 1,
-      gapCount: 3,
+      gapCount: result.cells.length - 1,
       unsupportedAgentCount: 1,
     });
 
     const missing = await svc.coverage(companyId, { missingOnly: true });
     expect(missing.cells.every((cell) => cell.desired === false)).toBe(true);
-    expect(missing.cells).toHaveLength(3);
+    expect(missing.cells).toHaveLength(result.cells.length - 1);
     expect(missing.summary).toEqual(result.summary);
     expect(missing.agents.map((agent) => agent.name)).toEqual(["Ada", "Bea"]);
     } finally {
@@ -3592,7 +3598,7 @@ describeEmbeddedPostgres("companySkillService.list", () => {
     }
   });
 
-  it("returns empty coverage when the company has no installed skills", async () => {
+  it("refreshes the skill inventory before building coverage", async () => {
     const companyId = randomUUID();
     await seedCompany(companyId);
     await db.insert(agents).values({
@@ -3604,17 +3610,12 @@ describeEmbeddedPostgres("companySkillService.list", () => {
       adapterConfig: {},
     });
 
-    await expect(svc.coverage(companyId)).resolves.toEqual({
-      skills: [],
-      agents: [],
-      cells: [],
-      summary: {
-        agentCount: 0,
-        skillCount: 0,
-        desiredCellCount: 0,
-        gapCount: 0,
-        unsupportedAgentCount: 0,
-      },
-    });
+    const result = await svc.coverage(companyId);
+    const listed = await svc.list(companyId);
+
+    expect(result.skills.some((skill) => skill.key.startsWith("paperclipai/paperclip/"))).toBe(true);
+    expect(result.skills.map((skill) => skill.key).sort()).toEqual(listed.map((skill) => skill.key).sort());
+    expect(result.agents).toHaveLength(1);
+    expect(result.cells).toHaveLength(result.skills.length);
   });
 });

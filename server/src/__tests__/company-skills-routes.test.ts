@@ -1684,6 +1684,105 @@ describe("company skill mutation permissions", () => {
     expect(mockCompanySkillService.detail).not.toHaveBeenCalled();
   });
 
+  it("hides other agents' desired skills from a same-company agent key", async () => {
+    const selfId = "55555555-5555-4555-8555-555555555555";
+    const peerId = "66666666-6666-4666-8666-666666666666";
+    const peerVersionId = "77777777-7777-4777-8777-777777777777";
+    mockCompanySkillService.coverage.mockResolvedValue({
+      skills: [
+        { id: "skill-self", key: "self-skill", name: "Self Skill", slug: "self-skill" },
+        { id: "skill-peer", key: "peer-skill", name: "Peer Skill", slug: "peer-skill" },
+      ],
+      agents: [
+        {
+          id: selfId,
+          name: "Self",
+          urlKey: "self",
+          role: "engineer",
+          adapterType: "cursor",
+          syncMode: "persistent",
+        },
+        {
+          id: peerId,
+          name: "Peer",
+          urlKey: "peer",
+          role: "engineer",
+          adapterType: "cursor",
+          syncMode: "persistent",
+        },
+      ],
+      cells: [
+        {
+          agentId: selfId,
+          skillKey: "self-skill",
+          desired: true,
+          versionId: null,
+          actualState: null,
+          syncMode: "persistent",
+        },
+        {
+          agentId: selfId,
+          skillKey: "peer-skill",
+          desired: false,
+          versionId: null,
+          actualState: null,
+          syncMode: "persistent",
+        },
+        {
+          agentId: peerId,
+          skillKey: "peer-skill",
+          desired: true,
+          versionId: peerVersionId,
+          actualState: null,
+          syncMode: "persistent",
+        },
+      ],
+      summary: {
+        agentCount: 2,
+        skillCount: 2,
+        desiredCellCount: 2,
+        gapCount: 1,
+        unsupportedAgentCount: 0,
+      },
+    });
+    mockAccessService.decide.mockImplementation(async (input: {
+      action: string;
+      resource?: { type?: string; agentId?: string };
+    }) => {
+      if (input.action === "agent:read") return { allowed: true };
+      if (
+        input.action === "agent_config:read"
+        && input.resource?.type === "agent"
+        && input.resource.agentId === selfId
+      ) {
+        return { allowed: true };
+      }
+      return { allowed: false };
+    });
+
+    const res = await request(await createApp({
+      type: "agent",
+      agentId: selfId,
+      companyId: "company-1",
+    })).get("/api/companies/company-1/skills/coverage");
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(JSON.stringify(res.body)).not.toContain(peerId);
+    expect(JSON.stringify(res.body)).not.toContain(peerVersionId);
+    expect(res.body.agents.map((agent: { id: string }) => agent.id)).toEqual([selfId]);
+    expect(res.body.cells).toEqual([
+      expect.objectContaining({ agentId: selfId, skillKey: "self-skill", desired: true }),
+      expect.objectContaining({ agentId: selfId, skillKey: "peer-skill", desired: false }),
+    ]);
+    expect(res.body.summary).toEqual({
+      agentCount: 1,
+      skillCount: 2,
+      desiredCellCount: 1,
+      gapCount: 1,
+      unsupportedAgentCount: 0,
+    });
+  });
+
   it("accepts category updates and logs the skill mutation", async () => {
     const app = await createApp({ type: "board", source: "local_implicit", userId: "user-1" });
 
