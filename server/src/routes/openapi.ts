@@ -152,6 +152,8 @@ import {
   skillSourcePreviewSchema,
   skillSourceCreateSchema,
   skillSourceSelectionSchema,
+  companySkillCoverageQuerySchema,
+  companySkillCoverageResponseSchema,
   companySkillCreateSchema,
   companySkillFileDeleteSchema,
   companySkillFileUpdateSchema,
@@ -7933,6 +7935,23 @@ registry.registerPath({
     }),
   },
   responses: { 200: r.ok(), 401: r.unauthorized, 404: r.notFound },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/api/companies/{companyId}/skills/coverage",
+  tags: ["skills"],
+  summary: "Get company skill coverage across readable agents",
+  request: {
+    params: z.object({ companyId: z.string() }),
+    query: companySkillCoverageQuerySchema,
+  },
+  responses: {
+    200: r.ok(companySkillCoverageResponseSchema),
+    400: r.badRequest,
+    401: r.unauthorized,
+    403: r.forbidden,
+  },
 });
 
 registry.registerPath({
