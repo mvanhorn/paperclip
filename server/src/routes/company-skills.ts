@@ -266,10 +266,33 @@ export function companySkillRoutes(db: Db) {
     };
   }
 
+  type SkillCoverageWithDesiredCounts = CompanySkillCoverageResponse & {
+    desiredCellCountByAgentId?: Record<string, number>;
+  };
+
+  function publicSkillCoverage(coverage: SkillCoverageWithDesiredCounts): CompanySkillCoverageResponse {
+    if (coverage.desiredCellCountByAgentId === undefined) return coverage;
+    const publicCoverage = { ...coverage };
+    delete publicCoverage.desiredCellCountByAgentId;
+    return publicCoverage;
+  }
+
+  function visibleDesiredCellCount(
+    coverage: SkillCoverageWithDesiredCounts,
+    allowedIds: Set<string>,
+    cells: CompanySkillCoverageResponse["cells"],
+  ) {
+    const counts = coverage.desiredCellCountByAgentId;
+    if (!counts) return cells.filter((cell) => cell.desired).length;
+    let total = 0;
+    for (const agentId of allowedIds) total += counts[agentId] ?? 0;
+    return total;
+  }
+
   async function filterCoverageForActor(
     req: Request,
     companyId: string,
-    coverage: CompanySkillCoverageResponse,
+    coverage: SkillCoverageWithDesiredCounts,
   ): Promise<CompanySkillCoverageResponse> {
     if (req.actor.type === "board") return coverage;
     if (coverage.agents.length === 0) {
@@ -315,7 +338,7 @@ export function companySkillRoutes(db: Db) {
       summary: {
         agentCount: agents.length,
         skillCount: skills.length,
-        desiredCellCount: cells.filter((cell) => cell.desired).length,
+        desiredCellCount: visibleDesiredCellCount(coverage, allowedIds, cells),
         gapCount: cells.filter((cell) => !cell.desired).length,
         unsupportedAgentCount: agents.filter((agent) => agent.syncMode === "unsupported").length,
       },
@@ -531,7 +554,7 @@ export function companySkillRoutes(db: Db) {
       skillKey: firstQueryString(req.query.skillKey),
       agentId: firstQueryString(req.query.agentId),
     });
-    res.json(await filterCoverageForActor(req, companyId, await svc.coverage(companyId, query)));
+    res.json(publicSkillCoverage(await filterCoverageForActor(req, companyId, await svc.coverage(companyId, query))));
   });
 
   router.get("/companies/:companyId/skills/:skillId", async (req, res) => {

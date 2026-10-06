@@ -3663,15 +3663,21 @@ export function companySkillService(db: Db) {
       return { skills, agents: coverageAgents, cells, summary };
     }
 
+    const desiredCellCountByAgentId: Record<string, number> = {};
+    for (const agent of coverageAgents) desiredCellCountByAgentId[agent.id] = 0;
+    for (const cell of cells) {
+      if (cell.desired) desiredCellCountByAgentId[cell.agentId] += 1;
+    }
+
     const gapCells = cells.filter((cell) => !cell.desired);
     const agentIds = new Set(gapCells.map((cell) => cell.agentId));
     const skillKeys = new Set(gapCells.map((cell) => cell.skillKey));
-    return {
+    return Object.assign({
       skills: skills.filter((skill) => skillKeys.has(skill.key)),
       agents: coverageAgents.filter((agent) => agentIds.has(agent.id)),
       cells: gapCells,
       summary,
-    };
+    }, { desiredCellCountByAgentId });
   }
 
   async function versionCount(companyId: string, skillId: string) {

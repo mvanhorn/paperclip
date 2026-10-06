@@ -1778,6 +1778,14 @@ function applyDocumentFixups(document: any): any {
     }
   }
 
+  const coverageParameters = document.paths?.["/api/companies/{companyId}/skills/coverage"]?.get?.parameters;
+  const missingOnly = coverageParameters?.find((parameter: { name?: string; in?: string }) =>
+    parameter.name === "missingOnly" && parameter.in === "query");
+  if (missingOnly) {
+    missingOnly.required = false;
+    missingOnly.schema = { type: "boolean", default: false };
+  }
+
   return document;
 }
 
@@ -7944,7 +7952,12 @@ registry.registerPath({
   summary: "Get company skill coverage across readable agents",
   request: {
     params: z.object({ companyId: z.string() }),
-    query: companySkillCoverageQuerySchema,
+    query: z.object({
+      q: companySkillCoverageQuerySchema.shape.q,
+      missingOnly: z.boolean().optional().default(false),
+      skillKey: companySkillCoverageQuerySchema.shape.skillKey,
+      agentId: companySkillCoverageQuerySchema.shape.agentId,
+    }),
   },
   responses: {
     200: r.ok(companySkillCoverageResponseSchema),
