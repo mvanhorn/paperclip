@@ -1,4 +1,6 @@
+import { planTaskCases, planTaskProfile, planDefinitionDigest } from "./plan-task-cases.js";
 import { nativeCompletionTasks, nativeCompletionDefinitionDigest } from "./native-completion-cases.js";
+import { NATIVE_INSTRUCTION_SUITE, NATIVE_INSTRUCTION_BASE_SHA, nativeInstructionDefinitionDigest } from "./native-instruction-consolidation.js";
 import { nativeCompletionProfile, NATIVE_COMPLETION_BUDGET_CENTS } from "./native-completion-defaults.js";
 import { chatConfirmationTasks } from "./chat-cases.js";
 import { hiringTemplateTasks, hiringTemplateProfile, hiringTemplateDefinitionDigest } from "./hiring-template-cases.js";
@@ -11,6 +13,8 @@ import { continuationTasks } from "./continuation-cases.js";
 import { contextIntegrityTasks, paperclipDocumentTask } from "./context-integrity-cases.js";
 import { productionDefaultHireProfile, stockHarnessSourceDigest, stockHarnessSkillSources } from "./stock-harness.js";
 import { lifecycleLiveTasks, lifecycleLiveDefinitionDigest } from "./lifecycle-live-cases.js";
+import { publicMcpTasks, publicMcpWorkflowDigest, publicMcpWorkerInstructions, publicMcpWorkerSkillDigest } from "./public-mcp-cases.js";
+import { graderVersion as publicMcpGraderVersion } from "./public-mcp-grading.js";
 import { everydayTasks, productionStoryProfile } from "./everyday-cases.js";
 
 import { firstTaskTasks } from "./first-task-cases.js";
@@ -77,6 +81,7 @@ function commonAgent(
   fixtureId: string,
   adapterType: string,
   adapterConfig: Record<string, unknown>,
+  additionalInstructions: readonly string[] = [],
 ) {
   return {
     name: `Runner E2E ${fixtureId} ${input.executionId}`,
@@ -106,6 +111,7 @@ function commonAgent(
                 'For a planning task, do not inspect the OpenAPI schema. PUT /api/issues/$PAPERCLIP_TASK_ID/documents/plan with {title:"Plan",format:"markdown",body,changeSummary}; read latestRevisionId and latestRevisionNumber from that response. Then POST /api/issues/$PAPERCLIP_TASK_ID/interactions with {kind:"request_confirmation",continuationPolicy:"wake_assignee",payload:{version:1,prompt,acceptLabel:"Approve",rejectLabel:"Reject",rejectRequiresReason:true,target:{type:"issue_document",key:"plan",revisionId,revisionNumber}}}, and PATCH the issue to {status:"in_review"}. Include Authorization and X-Paperclip-Run-Id on every write.',
               ]),
           "Never print, persist, or expose credential values, and never create unrelated work.",
+          ...additionalInstructions,
         ].join("\n"),
       },
     },
@@ -121,10 +127,12 @@ function legacyProfile(input: {
   model: string;
   credential: RunnerProfileFixture["credential"];
   extraConfig?: Record<string, unknown>;
+  instructions?: readonly string[];
+  modelQualification?: RunnerProfileFixture["modelQualification"];
 }): RunnerProfileFixture {
   return {
     ...input,
-    modelQualification: {
+    modelQualification: input.modelQualification ?? {
       source: "adapter_constant",
       qualificationId: `${input.adapterType}:default-model`,
     },
@@ -150,7 +158,7 @@ function legacyProfile(input: {
         env: {
           [input.credential]: requiredSecret(buildInput, input.credential),
         },
-      });
+      }, input.instructions);
     },
   };
 }
@@ -1082,6 +1090,35 @@ export const extendedHarnessFileTask: RunnerTaskFixture = {
 
 export const runnerSuites: readonly RunnerSuiteFixture[] = [
   {
+    id: "public-mcp", label: "Paperclip through an assistant", manualOnly: true,
+    description: "Paid assistant tool use plus actual team execution, browser OAuth consent, durable outcomes and authorization boundaries.",
+    groups: ["local"], environments: [localEnvironment], tasks: publicMcpTasks, expectedMatrixSize: 24,
+    profiles: [
+      ...["mini"].map(size => legacyProfile({
+        id: `assistant-codex-${size}`, label: `Assistant + Codex ${size}`, adapterType: "codex_local", provider: "codex",
+        model: `gpt-5.4-${size}`, credential: "OPENAI_API_KEY",
+        instructions: publicMcpWorkerInstructions,
+        modelQualification: { source: "qualified_runner_profile", qualificationId: `public-mcp-gpt-5.4-${size}-pilot` },
+        extraConfig: { engine: "cli", extraArgs: ["-c", "features.shell_snapshot=false", "-c", "features.apps=false", "-c", "features.plugins=false"] },
+      })),
+      ...[["haiku", "claude-haiku-4-5-20251001"], ["sonnet", "claude-sonnet-4-6"]].map(([name, model]) => legacyProfile({
+        id: `assistant-claude-${name}`, label: `Assistant + Claude ${name}`, adapterType: "claude_local", provider: "claude",
+        model: model!, credential: "ANTHROPIC_API_KEY",
+        instructions: publicMcpWorkerInstructions,
+        modelQualification: { source: "qualified_runner_profile", qualificationId: `public-mcp-${name}-pilot` },
+        extraConfig: { engine: "cli", maxTurnsPerRun: 16 },
+      })),
+    ],
+    definitionMetadata: { version: 6, grader: publicMcpGraderVersion, workflowDigest: publicMcpWorkflowDigest, workerSkillDigest: publicMcpWorkerSkillDigest, workerInstructions: publicMcpWorkerInstructions, assistantMaxRequests: 16, assistantMaxEstimatedUsd: 2, instructions: "shipped-plugin-skills", scheduling: "explicit-only" },
+  },
+  {
+    id: "plan-task-guidance", label: "Planning guidance utility", manualOnly: true,
+    description: "Current, short and disabled planning skills on cohesive, parallel, dependent and independently reviewed work.",
+    groups: ["native"], profiles: runnerProfiles.filter(p => p.id === "runner-codex").map(planTaskProfile),
+    environments: [localEnvironment], tasks: planTaskCases, expectedMatrixSize: 12,
+    definitionMetadata: { version: 1, definitionDigest: planDefinitionDigest, scheduling: "explicit-only", comparison: "public-skill-availability-ablation", scope: "one-profile-single-attempt" },
+  },
+  {
     id: "blocker-guidance", label: "Direct blocker handling", manualOnly: true,
     description: "Human authority, hiring permissions, and requester scope under the production coordination skill.",
     groups: ["legacy"], profiles: runnerProfiles.filter(p => ["legacy-codex", "legacy-claude"].includes(p.id)).map(blockerProfile),
@@ -1190,12 +1227,32 @@ export const runnerSuites: readonly RunnerSuiteFixture[] = [
   {
     id: "everyday-workflows", label: "Everyday Paperclip Work", manualOnly: true,
     description: "Real user requests, useful downloaded work, and durable continuation using production instructions.",
-    groups: ["native"], profiles: everydayProfiles, environments: [localEnvironment, daytonaWarmEnvironment],
-    tasks: everydayTasks, expectedMatrixSize: 50,
+    groups: ["native"], profiles: [...everydayProfiles,
+      productionStoryProfile(runnerProfiles.find(profile => profile.id === "runner-opencode")!),
+    ], environments: [localEnvironment, daytonaWarmEnvironment],
+    tasks: everydayTasks.map(task => ["hire-reuse", "delegate-feedback"].includes(task.id)
+      ? { ...task, automaticRetryPolicy: "single_attempt" as const } : task), expectedMatrixSize: 52,
     excludedExecutionIds: [...everydayProfiles.flatMap(profile => everydayTasks
       .filter(task => !["build-revise", "delegate-feedback", "recover-controller", "create-skill-studio"].includes(task.id))
-      .map(task => `everyday-workflows.${profile.id}.daytona.${task.id}`))],
-    definitionMetadata: { version: 4, instructions: "production", grading: "outcome-and-invariants", scheduling: "explicit-only" },
+      .map(task => `everyday-workflows.${profile.id}.daytona.${task.id}`)),
+      ...everydayTasks.flatMap(task => [
+        `everyday-workflows.runner-opencode.daytona.${task.id}`,
+        ...(["hire-reuse", "delegate-feedback"].includes(task.id) ? [] : [`everyday-workflows.runner-opencode.local.${task.id}`]),
+      ]),
+    ],
+    definitionMetadata: { version: 6, instructions: "production", grading: "outcome-and-invariants", scheduling: "explicit-only",
+      procedureCases: { ids: ["hire-reuse", "delegate-feedback"], maximumAttemptsPerCell: 1, companyAndLeadBudgetCents: 1_000 } },
+  },
+  {
+    id: NATIVE_INSTRUCTION_SUITE, label: "Native completion instruction consolidation", manualOnly: true,
+    description: "Matched production-default durable-document and concrete-blocker checks for the completion constraint reduction.",
+    groups: ["native", "local"],
+    profiles: runnerProfiles.filter(profile => ["runner-codex", "runner-acpx-claude", "runner-opencode"].includes(profile.id)).map(nativeCompletionProfile),
+    environments: [localEnvironment], tasks: nativeCompletionTasks, expectedMatrixSize: 6,
+    definitionMetadata: { version: 1, fixtureDigest: nativeInstructionDefinitionDigest(), baseSha: NATIVE_INSTRUCTION_BASE_SHA,
+      instructions: "production-default", maximumAttemptsPerCell: 1, automaticRetryPolicy: "single_attempt",
+      budgetMonthlyCents: NATIVE_COMPLETION_BUDGET_CENTS, scheduling: "explicit-only",
+      grading: "original-assigned-skill-and-strict-native-completion", },
   },
   {
     id: "native-completion", label: "Native completion guidance", manualOnly: true,
