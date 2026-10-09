@@ -233,6 +233,8 @@ export function normalizeExperimentalSettings(raw: unknown): InstanceExperimenta
       // continuing to accept the compatibility key in stored settings.
       enableApps: true,
       enableMcpAggregators: true,
+      enablePublicMcp: parsed.data.enablePublicMcp ?? false,
+      enableOpenAiDot: parsed.data.enableOpenAiDot ?? false,
       enableChatConnectors: parsed.data.enableChatConnectors ?? false,
       enableMemoryConnectors: parsed.data.enableMemoryConnectors ?? false,
       enablePipelines: parsed.data.enablePipelines ?? false,
@@ -278,6 +280,8 @@ export function normalizeExperimentalSettings(raw: unknown): InstanceExperimenta
     enableStreamlinedUi: true,
     enableApps: true,
     enableMcpAggregators: true,
+    enablePublicMcp: false,
+    enableOpenAiDot: false,
     enableChatConnectors: false,
     enableMemoryConnectors: false,
     enablePipelines: false,

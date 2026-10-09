@@ -16,6 +16,18 @@ import { __liveUpdatesTestUtils } from "./LiveUpdatesProvider";
 import { queryKeys } from "../lib/queryKeys";
 
 describe("LiveUpdatesProvider issue invalidation", () => {
+  it("refreshes personal membership state when a primary changes on another device", () => {
+    const client = new QueryClient();
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+    __liveUpdatesTestUtils.invalidateActivityQueries(client, "company-1", {
+      entityType: "user_preference", entityId: "user-1", action: "primary_agent.updated",
+      actorType: "user", actorId: "user-1",
+    }, { userId: "user-1", agentId: null });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["primary-agent", "company-1"] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: queryKeys.resourceMemberships.mine("company-1") });
+    client.clear();
+  });
+
   it.each([
     ["chat-1", "issue.comment_added", "agent", "agent-1", true],
     ["task-1", "issue.comment_added", "agent", "agent-1", false],
@@ -937,6 +949,9 @@ describe("LiveUpdatesProvider issue invalidation", () => {
     expect(invalidations).toContainEqual({
       queryKey: queryKeys.issues.comments("issue-1"),
     });
+    for (const ref of ["PAP-759", "issue-1"]) {
+      expect(invalidations).toContainEqual({ queryKey: queryKeys.issues.workProductPullRequestRefresh(ref) });
+    }
     expect(cache.get(JSON.stringify(queryKeys.issues.activeRun("PAP-759")))).toBeNull();
     expect(cache.get(JSON.stringify(queryKeys.issues.liveRuns("PAP-759")))).toEqual([]);
     expect(cache.get(JSON.stringify(queryKeys.issues.detail("PAP-759")))).toMatchObject({
@@ -977,6 +992,7 @@ describe("LiveUpdatesProvider issue invalidation", () => {
       )).toBe(true);
       for (const ref of ["PAP-759", "issue-1"]) {
         expect(invalidations).not.toContainEqual({ queryKey: queryKeys.issues.comments(ref) });
+        expect(invalidations).not.toContainEqual({ queryKey: queryKeys.issues.workProductPullRequestRefresh(ref) });
       }
     },
   );

@@ -64,6 +64,8 @@ const ASANA_MANAGED = {
 const BOX = CONNECTABLE_APP_DEFINITIONS.find((app) => app.slug === "box")!;
 const POSTHOG = CONNECTABLE_APP_DEFINITIONS.find((app) => app.slug === "posthog")!;
 const NEON = CONNECTABLE_APP_DEFINITIONS.find((app) => app.slug === "neon")!;
+const SUPERAGENT = CONNECTABLE_APP_DEFINITIONS.find((app) => app.slug === "superagent")!;
+const GAUGE = CONNECTABLE_APP_DEFINITIONS.find((app) => app.slug === "gauge")!;
 const POSTMAN = CONNECTABLE_APP_DEFINITIONS.find((app) => app.slug === "postman")!;
 const SHOPIFY = CONNECTABLE_APP_DEFINITIONS.find((app) => app.slug === "shopify")!;
 const GOOGLE_SHEETS = CONNECTABLE_APP_DEFINITIONS.find((app) => app.slug === "google-sheets")!;
@@ -1207,7 +1209,10 @@ describe("AppsConnect — Connect with a link (M4 frame)", () => {
   });
 
   it("collects customer-owned OAuth client details for a curated manual OAuth app", async () => {
-    listGalleryMock.mockResolvedValue({ apps: [BOX] });
+    listGalleryMock.mockResolvedValue({
+      apps: [BOX],
+      oauthCallbackUrl: "https://paperclip.example.test/api/tools/oauth/callback",
+    });
     mockParams.appKey = "box";
     await render();
     await passAccessStep();
@@ -1220,7 +1225,7 @@ describe("AppsConnect — Connect with a link (M4 frame)", () => {
     );
     expect(container.textContent).toContain("Paperclip callback URL");
     expect(container.textContent).toContain(
-      "http://localhost:3000/api/tools/oauth/callback",
+      "https://paperclip.example.test/api/tools/oauth/callback",
     );
     expect(buttonByText("Continue to sign in")?.disabled).toBe(true);
 
@@ -2022,6 +2027,78 @@ describe("AppsConnect — Connect with a link (M4 frame)", () => {
 
     expect(container.textContent).toContain("Connect GitHub");
     expect(container.textContent).not.toContain("Pick the app you want your agents to use.");
+  });
+
+  it("connects Superagent with only an organization API key", async () => {
+    mockParams.appKey = "superagent";
+    listGalleryMock.mockResolvedValueOnce({ apps: [SUPERAGENT] });
+    await render();
+
+    expect(radioContaining("Sign in with")).toBeFalsy();
+    // The Ask-first advice must be visible on the key form, which renders the
+    // credential helper text rather than method warnings.
+    expect(container.textContent).toContain("set billable and destructive actions to Ask first");
+    const keyInput = container.querySelector<HTMLInputElement>('input[type="password"]');
+    expect(keyInput).toBeTruthy();
+    expect(buttonByText("Connect")?.disabled).toBe(true);
+
+    await act(async () => {
+      setInputValue(keyInput!, "sk_live_test-key");
+    });
+    await flushReact();
+    const submit = buttonByText("Connect");
+    expect(submit?.disabled).toBe(false);
+    await act(async () => {
+      submit?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    await flushReact();
+
+    expect(connectAppMock).toHaveBeenCalledWith("company-1", expect.objectContaining({
+      galleryKey: "superagent",
+      connectionMethodKey: "mcp-api-key",
+      credentialValues: { "credentials.authorization": "sk_live_test-key" },
+    }));
+  });
+
+  it("defaults Gauge to browser sign-in and connects an organization API key once entered", async () => {
+    mockParams.appKey = "gauge";
+    listGalleryMock.mockResolvedValueOnce({ apps: [GAUGE] });
+    await render();
+    // The publish warning must be visible on the default sign-in path, before
+    // the operator opens Advanced or switches to the API-key method.
+    expect(container.textContent).toContain("can publish to your connected CMS, including live");
+    expect(buttonByText("Continue to sign in")?.disabled).toBe(false);
+    await openAccessAdvanced();
+
+    expect(radioContaining("Sign in with Gauge")?.getAttribute("aria-checked")).toBe("true");
+    expect(buttonByText("Continue to sign in")?.disabled).toBe(false);
+
+    await act(async () => {
+      radioContaining("Use an API key")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    await flushReact();
+
+    expect(container.textContent).toContain("set publish actions to Ask first");
+    const keyInput = container.querySelector<HTMLInputElement>('input[type="password"]');
+    expect(keyInput).toBeTruthy();
+    expect(buttonByText("Connect")?.disabled).toBe(true);
+
+    await act(async () => {
+      setInputValue(keyInput!, "gauge-test-key");
+    });
+    await flushReact();
+    const submit = buttonByText("Connect");
+    expect(submit?.disabled).toBe(false);
+    await act(async () => {
+      submit?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    await flushReact();
+
+    expect(connectAppMock).toHaveBeenCalledWith("company-1", expect.objectContaining({
+      galleryKey: "gauge",
+      connectionMethodKey: "mcp-api-key",
+      credentialValues: { "credentials.authorization": "gauge-test-key" },
+    }));
   });
 
   it("enables Neon's Connect button only once the API key is entered, with pin and read-only optional", async () => {

@@ -1,3 +1,4 @@
+import { PrimaryAgentIndicator, SetPrimaryAgentButton } from "@/components/primary-agent/PrimaryAgentPresentation";
 import { AiConnectionPoolRunDetails } from "@/components/ai-connections/AiConnectionPoolRunDetails";
 import { AgentConnectionInstructions } from "@/features/connections/ConnectionInstructions";
 import type { AgentInstructionCandidate, AgentInstructionsBundle } from "@paperclipai/shared";
@@ -63,7 +64,7 @@ import { SourceResolvedFoldBadge } from "../components/SourceResolvedFoldBadge";
 import { readSourceResolvedWatchdogFold } from "../lib/source-resolved-watchdog-fold";
 import { buildSameOriginWebSocketUrl } from "../lib/websocket-url";
 import { tryCreateWebSocket } from "../lib/websocket";
-import { formatDate, relativeTime, formatTokens, visibleRunCostUsd } from "../lib/utils";
+import { formatDate, relativeTime, formatTokens, visibleRunCostUsd, visibleRunTokenTotal } from "../lib/utils";
 import { cn } from "../lib/utils";
 import { RunRetryDetails } from "../components/RunRetryDetails";
 import { Button } from "@/components/ui/button";
@@ -383,7 +384,7 @@ function runMetrics(run: HeartbeatRun) {
     output,
     cached,
     cost,
-    totalTokens: input + output,
+    totalTokens: visibleRunTokenTotal(usage),
     provider,
     model,
   };
@@ -1247,14 +1248,15 @@ export function AgentDetail() {
             <AgentCharacter agent={agent} state={characterStateForAgent(agent.status)} size={96} trackingScope="page" />
           </div>
           <div className="min-w-0 space-y-1">
-            <h1 className="truncate text-2xl font-semibold tracking-tight">{agent.name}</h1>
+            <div className="flex items-center gap-2"><h1 className="truncate text-2xl font-semibold tracking-tight">{agent.name}</h1><PrimaryAgentIndicator agentId={agent.id} companyId={agent.companyId} /></div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {agent.adapterType === "claude_local" || agent.adapterType === "codex_local"
                 ? <img src={`/brands/${agent.adapterType === "claude_local" ? "claude" : "codex"}-color.svg`} className="size-4" alt="" />
                 : null}
-              <span>{getAdapterDisplay(agent.adapterType).label}</span><span>·</span>
+              <span>{getAdapterDisplay(agent.adapterType === "paperclip_runner" && agent.adapterConfig.provider === "openai_dot" ? "openai_dot" : agent.adapterType).label}</span><span>·</span>
               <span>{agent.title || roleLabels[agent.role] || agent.role}</span>
             </div>
+            <SetPrimaryAgentButton agent={agent} />
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -1728,7 +1730,10 @@ export function AgentOverview({
     ?? asNonEmptyString(agent.runtimeConfig?.model)
     ?? "Adapter default";
   const lastRun = runs[0] ?? null;
-
+  const identity = useQuery({
+    queryKey: [...queryKeys.agents.identity(agent.id), lastRun?.id, lastRun?.status],
+    queryFn: () => agentsApi.getIdentity(agent.id, agent.companyId),
+  });
   return (
     <div className="space-y-6">
       <LatestRunCard runs={runs} agentId={agentRouteId} issuesById={issuesById} />
@@ -1750,6 +1755,20 @@ export function AgentOverview({
               ) : <span className="text-sm">Board</span>}
             </SummaryRow>
             <SummaryRow label="Direct reports"><span className="text-sm tabular-nums">{directReportCount}</span></SummaryRow>
+            <SummaryRow label="Public key">
+              {identity.isPending ? <span className="text-sm text-muted-foreground">Loading…</span>
+                : identity.isError ? <span className="text-sm text-destructive">Could not load public key</span>
+                : identity.data ? (
+                  <CopyText text={identity.data.publicKeyPem} ariaLabel="Copy public key" title="Copy public key">
+                    <span className="font-mono text-sm">{identity.data.keyId.slice(0, 19)}…</span>
+                  </CopyText>
+                ) : (
+                  <div className="text-sm">
+                    <div>Not created yet</div>
+                    <div className="text-xs text-muted-foreground">Created automatically on the next managed run</div>
+                  </div>
+                )}
+            </SummaryRow>
           </div>
         </section>
 
@@ -1759,7 +1778,7 @@ export function AgentOverview({
             <Link className="text-xs text-muted-foreground hover:text-foreground" to={agentDetailHref(agentRouteId, "runtime")}>Configure</Link>
           </div>
           <div className="space-y-3">
-            <SummaryRow label="Adapter"><span className="text-sm">{adapterLabels[agent.adapterType] ?? agent.adapterType}</span></SummaryRow>
+            <SummaryRow label="Adapter"><span className="text-sm">{getAdapterDisplay(agent.adapterType === "paperclip_runner" && agent.adapterConfig.provider === "openai_dot" ? "openai_dot" : agent.adapterType).label}</span></SummaryRow>
             <SummaryRow label="Model"><span className="max-w-64 truncate text-sm font-mono">{configuredModel}</span></SummaryRow>
             <SummaryRow label="Session"><span className="max-w-64 truncate text-sm font-mono">{runtimeState?.sessionDisplayId ?? runtimeState?.sessionId ?? "No session"}</span></SummaryRow>
             <SummaryRow label="Last run">

@@ -10,6 +10,16 @@ import { canonicalNativeRuntimeContextDigest, parseNativeExecutionInput } from "
 
 export type NativeToolExecutionTargetKind = "local" | "remote";
 
+/** Fence live ACPX owners when shared runtime semantics change, even if the
+ * underlying native executable/profile did not change. Undefined preserves
+ * the existing configuration digest for other provider transports.
+ */
+export function nativeRuntimeContractForProvider(
+  provider: NativeExecutionInput["provider"],
+): string | undefined {
+  return provider.kind === "acpx" ? "paperclip.acpx-runtime-contract.v1" : undefined;
+}
+
 /**
  * Persisted provider threads retain their dynamic-tool declarations. This
  * fingerprint is part of checkpoint compatibility and must change whenever
@@ -558,6 +568,9 @@ export function rebindNativeSessionCheckpoint(input: {
     activeTurnId: null,
     terminalTurns: [],
     pendingRuntimeRequests: [],
+    // Settlement evidence belongs to the prior heartbeat run, even when the
+    // provider session is reused for the user's response.
+    governedWait: undefined,
     providerRecoveryPolicy,
   };
 }

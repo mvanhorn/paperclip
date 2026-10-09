@@ -110,12 +110,13 @@ const mockPrepareManagedAiRuntime = vi.hoisted(() => vi.fn());
 vi.mock("../services/ai-connection-runtime.js", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/ai-connection-runtime.js")>()),
   prepareManagedAiRuntime: mockPrepareManagedAiRuntime,
+  withManagedAiProbe: async (_db: unknown, input: unknown, probe: (runtime: unknown) => Promise<unknown>) => {
+    const runtime = await mockPrepareManagedAiRuntime(_db, input);
+    try { return await probe(runtime); } finally { await runtime.cleanup(); }
+  },
 }));
 const mockValidateAiApiKey = vi.hoisted(() => vi.fn(async () => undefined));
-vi.mock("../routes/ai-connections.js", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../routes/ai-connections.js")>()),
-  validateAiApiKey: mockValidateAiApiKey,
-}));
+vi.mock("../services/ai-api-key-test.js", () => ({ validateAiApiKey: mockValidateAiApiKey }));
 const mockMarkAuthenticationFailed = vi.hoisted(() => vi.fn(async () => undefined));
 vi.mock("../services/ai-connections.js", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/ai-connections.js")>()),
@@ -1025,4 +1026,10 @@ describe("agent test-environment route", () => {
       expect(testEnvironmentSpy.mock.calls[0]?.[0]?.executionTarget ?? null).toBeNull();
     });
   });
+});
+
+vi.mock("../services/agent-lifecycle.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../services/agent-lifecycle.js")>();
+  return { ...actual, createAgentLifecycle: () => ({
+  }) };
 });

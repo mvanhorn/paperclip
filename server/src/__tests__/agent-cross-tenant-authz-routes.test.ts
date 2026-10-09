@@ -358,6 +358,12 @@ describe("agent cross-tenant route authorization", () => {
     };
     const deniedCases = [
       {
+        label: "public cryptographic identity",
+        request: (app: express.Express) =>
+          requestApp(app, (baseUrl) => request(baseUrl).get(`/api/agents/${agentId}/identity`)),
+        untouched: [],
+      },
+      {
         label: "pause",
         request: (app: express.Express) =>
           requestApp(app, (baseUrl) => request(baseUrl).post(`/api/agents/${agentId}/pause`).send({})),
@@ -748,4 +754,14 @@ describe("agent cross-tenant route authorization", () => {
     expect(res.body.error).toBe("Only agents in error status can have their error cleared");
     expect(mockLogActivity).not.toHaveBeenCalled();
   });
+});
+
+vi.mock("../services/agent-lifecycle.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../services/agent-lifecycle.js")>();
+  return { ...actual, createAgentLifecycle: () => ({
+    requestHire: (...args: unknown[]) => mockAgentService.create(...args),
+    pauseAgent: (...args: unknown[]) => mockAgentService.pause(...args),
+    resumeAgent: (...args: unknown[]) => mockAgentService.resume(...args),
+    terminateAgent: (...args: unknown[]) => mockAgentService.terminate(...args),
+  }) };
 });

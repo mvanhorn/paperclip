@@ -513,7 +513,9 @@ export interface ConnectionSetupFlowProps {
   connectionSettings?: ReactNode;
   additionalSettingsValid?: boolean;
   upstreamServiceName?: string;
-  aiConnection?: import("@paperclipai/shared").AiConnectionBinding;
+  aiConnection?: import("@paperclipai/shared").AiConnectionBinding | Pick<import("@paperclipai/shared").AiConnectionBinding, "provider" | "method" | "mode">;
+  /** A company service requires a company-owned credential. Existing grants are never broadened. */
+  requiredAiOwnership?: "shared";
   /** Provider-specific authentication inside the existing access/setup shell. Undefined retains the standard credential form. */
   renderCredentialStep?: (context: { app: AppDefinition; name: string; grantKind: ConnectionGrantKind; agentIds: string[]; allAgents: boolean; onBack: () => void }) => ReactNode;
   byoOnly?: boolean;
@@ -587,6 +589,7 @@ function StandardConnectionSetupFlow({
   onComplete,
   onOAuthDeclined,
   aiConnection,
+  requiredAiOwnership,
   onPhaseChange,
   onCancel,
   renderCredentialStep,
@@ -975,12 +978,16 @@ function StandardConnectionSetupFlow({
   const galleryQuery = useQuery({
     queryKey: queryKeys.apps.gallery(selectedCompanyId ?? "__none__"),
     queryFn: () => toolsApi.listGallery(selectedCompanyId!),
-    select: useCallback((data: Awaited<ReturnType<typeof toolsApi.listGallery>>) => connectionIntentId ? {
+    select: useCallback((data: Awaited<ReturnType<typeof toolsApi.listGallery>>) => connectionIntentId || aiConnection ? {
       ...data,
       apps: data.apps.map(app => ({ ...app, methods: app.methods.filter(method => aiConnection ? method.ai?.provider === aiConnection.provider && (aiConnection.mode === "responsible_user" || method.ai.method === aiConnection.method) : method.transport !== "runtime_auth") })).filter(app => app.methods.length > 0),
     } : data, [connectionIntentId, aiConnection?.provider, aiConnection?.method, aiConnection?.mode]),
     enabled: !!selectedCompanyId,
   });
+  const callbackUrlForSetup = oauthCallbackUrlForBrowser(
+    window.location.origin,
+    galleryQuery.data?.oauthCallbackUrl,
+  );
   // Use the same visible catalog for cards and every branded URL shortcut.
   // Generic custom URLs remain usable without selecting a hidden provider.
   const visibleGalleryApps = useMemo(
@@ -1183,7 +1190,7 @@ function StandardConnectionSetupFlow({
         ? "agent"
       : "organization"
     : null;
-  const fixedGrantKind = reconnectGrantKind ?? existingOAuthGrantKind;
+  const fixedGrantKind = reconnectGrantKind ?? existingOAuthGrantKind ?? (requiredAiOwnership === "shared" ? "organization" : null);
 
   useEffect(() => {
     if (fixedGrantKind) setGrantKind(fixedGrantKind);
@@ -2022,7 +2029,7 @@ function StandardConnectionSetupFlow({
     <OAuthClientFields
       entry={automaticOAuthEntry}
       method={automaticCustomerClientMethod}
-      callbackUrl={oauthCallbackUrlForBrowser()}
+      callbackUrl={callbackUrlForSetup}
       clientId={curatedOAuthClientId}
       onClientIdChange={setCuratedOAuthClientId}
       clientSecret={curatedOAuthClientSecret}
@@ -2240,6 +2247,7 @@ function StandardConnectionSetupFlow({
   const aiMethod = reconnectAiMethod ?? entry?.methods.find(method => method.key === connectionMethodKey)?.ai
     ?? (!connectionMethodKey && entry?.methods.every(method => method.ai) ? entry.methods[0]?.ai : undefined);
   const credentialStep = entry ? renderCredentialStep?.({ app: entry, name: galleryName || entry.name, grantKind: effectiveGrantKind, agentIds: [...installAgentIds], allAgents: installChoice === "all", onBack: () => backToGallery() }) ?? (aiMethod && selectedCompanyId ? <><AiConnectionCredentialStep
+    defaults={reconnectConnection ? undefined : connectionDefaults}
     companyId={selectedCompanyId} provider={aiMethod.provider} fixedMethod={Boolean(aiConnection && aiConnection.mode !== "responsible_user")} initialMethod={reconnectConnection?.connectionPurpose === "ai" ? (reconnectConnection.config?.ai as { method: "subscription" | "api_key" }).method : aiMethod.method}
     connectionId={reconnectConnection?.connectionPurpose === "ai" ? reconnectConnection.id : undefined}
     name={reconnectConnection?.connectionPurpose === "ai" ? reconnectConnection.name : galleryName || `My ${entry.name} ${aiMethod.method === "subscription" ? "subscription" : "API"}`}
@@ -2422,6 +2430,7 @@ function StandardConnectionSetupFlow({
           oauthClientId={curatedOAuthClientId}
           onOAuthClientIdChange={setCuratedOAuthClientId}
           oauthClientSecret={curatedOAuthClientSecret}
+          oauthCallbackUrl={callbackUrlForSetup}
           canReuseOAuthClientSecret={Boolean(
             identityConnection?.config?.oauth
             && (identityConnection.config.oauth as Record<string, unknown>).clientId === curatedOAuthClientId.trim()
@@ -3393,6 +3402,7 @@ function KeyStep({
   oauthClientId,
   onOAuthClientIdChange,
   oauthClientSecret,
+  oauthCallbackUrl: serverCallbackUrl,
   canReuseOAuthClientSecret,
   onOAuthClientSecretChange,
   credentialSource,
@@ -3419,6 +3429,7 @@ function KeyStep({
   oauthClientId: string;
   onOAuthClientIdChange: (next: string) => void;
   oauthClientSecret: string;
+  oauthCallbackUrl: string;
   canReuseOAuthClientSecret: boolean;
   onOAuthClientSecretChange: (next: string) => void;
   credentialSource: ToolConnectionCredentialSource;
@@ -3516,7 +3527,7 @@ function KeyStep({
   );
   const vercelConnectorFilled = !usingVercel || vercelConnector.trim().length > 0;
   const oauthCallbackUrl = method?.auth === "oauth" && acceptsCustomerOAuthClient
-    ? oauthCallbackUrlForBrowser()
+    ? serverCallbackUrl
     : null;
   const allConfigFields = [...(method?.tenantFields ?? []), ...(method?.extensionFields ?? [])];
   const configFields = allConfigFields.filter((field) => !field.hidden);

@@ -43,6 +43,7 @@ import {
   releaseRuntimeServicesForRun,
   UnresolvedWorkspaceBaseRefError,
   resetRuntimeServicesForTests,
+  resetRuntimeServicePortReservationsForTests,
   MANAGED_RUNTIME_PUBLIC_URL_ENV,
   resolveManagedPaperclipRuntimePublicOrigin,
   resolveRuntimeProvisionCommand,
@@ -454,6 +455,9 @@ afterEach(async () => {
   delete process.env.PAPERCLIP_WORKTREES_DIR;
   delete process.env.DATABASE_URL;
   await resetRuntimeServicesForTests();
+  // Registry reset does not clear the process-local allocation claims. A
+  // failed-start fixture must not reserve another test's ephemeral port.
+  resetRuntimeServicePortReservationsForTests();
 });
 
 describe("sanitizeRuntimeServiceBaseEnv", () => {
@@ -4099,6 +4103,7 @@ describe("realizeExecutionWorkspace", () => {
       "utf8",
     );
     process.env.PAPERCLIP_WORKTREES_DIR = worktreesDir;
+    const canonicalInstanceRoot = await fs.realpath(instanceRoot);
 
     await cleanupExecutionWorkspaceArtifacts({
       workspace: {
@@ -4133,7 +4138,7 @@ describe("realizeExecutionWorkspace", () => {
     expect(operations[0]?.command).toBe("printf 'cleanup ok\\n'");
     expect(operations[1]?.metadata).toMatchObject({
       cleanupAction: "remove_worktree_instance",
-      instanceRoot,
+      instanceRoot: canonicalInstanceRoot,
     });
     expect(operations[2]?.metadata).toMatchObject({
       cleanupAction: "worktree_remove",
@@ -6673,7 +6678,7 @@ describeEmbeddedPostgres("workspace runtime service control persistence", () => 
       }
       throw new Error("Timed out waiting for runtime service process marker");
     };
-    const waitForPersistedStatus = async (status: string) => {
+    const waitForPersistedStatus = async (status: string, requireProviderRef = false) => {
       const deadline = Date.now() + 5_000;
       while (Date.now() < deadline) {
         const row = await db
@@ -6681,7 +6686,9 @@ describeEmbeddedPostgres("workspace runtime service control persistence", () => 
           .from(workspaceRuntimeServices)
           .where(eq(workspaceRuntimeServices.executionWorkspaceId, executionWorkspaceId))
           .then((rows) => rows[0] ?? null);
-        if (row?.status === status) return row;
+        // The provisional starting row is durable before spawn; the child can
+        // write its marker before the subsequent PID update reaches the DB.
+        if (row?.status === status && (!requireProviderRef || /^\d+$/.test(row.providerRef ?? ""))) return row;
         await new Promise((resolve) => setTimeout(resolve, 25));
       }
       throw new Error(`Timed out waiting for persisted runtime service status ${status}`);
@@ -7652,16 +7659,25 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
     process.env.PAPERCLIP_HOME = paperclipHome;
     process.env.PAPERCLIP_INSTANCE_ID = `runtime-desired-reconcile-${randomUUID()}`;
 
-    const reservePort = async () => {
-      const probe = net.createServer();
-      await new Promise<void>((resolve) => probe.listen(0, "127.0.0.1", resolve));
-      const address = probe.address();
-      const port = typeof address === "object" && address ? address.port : null;
-      await new Promise<void>((resolve, reject) => {
-        probe.close((error) => error ? reject(error) : resolve());
-      });
-      if (!port) throw new Error("Failed to reserve runtime reconciliation test port");
-      return port;
+    const reservePorts = async () => {
+      const probes = [net.createServer(), net.createServer()];
+      try {
+        // Keep both sockets open until both allocations finish. Closing the
+        // first probe early lets the kernel return that same port again.
+        for (const probe of probes) await new Promise<void>((resolve, reject) => {
+          probe.once("error", reject);
+          probe.listen(0, "127.0.0.1", resolve);
+        });
+        return probes.map(probe => {
+          const address = probe.address();
+          if (!address || typeof address !== "object") throw new Error("Failed to reserve runtime reconciliation test port");
+          return address.port;
+        });
+      } finally {
+        await Promise.all(probes.filter(probe => probe.listening).map(probe => new Promise<void>((resolve, reject) => {
+          probe.close(error => error ? reject(error) : resolve());
+        })));
+      }
     };
     const isLoopbackPortFree = async (port: number) => {
       const probe = net.createServer();
@@ -7682,8 +7698,8 @@ describeEmbeddedPostgres("workspace runtime startup reconciliation", () => {
       }
       throw new Error(`Port ${port} did not become free in time`);
     };
-    const stoppedPort = await reservePort();
-    const livePort = await reservePort();
+    const [stoppedPort, livePort] = await reservePorts();
+    expect(stoppedPort).not.toBe(livePort);
     const companyId = randomUUID();
     const projectId = randomUUID();
     const projectWorkspaceId = randomUUID();
@@ -9737,7 +9753,7 @@ describe("realizeExecutionWorkspace with an exact existing branch", () => {
 
     const workspace = await realizeExistingBranch(repoRoot, "feature/legacy-checkout");
 
-    expect(workspace.cwd).toBe(path.resolve(legacyPath));
+    expect(workspace.cwd).toBe(await fs.realpath(legacyPath));
     expect(workspace.branchName).toBe("feature/legacy-checkout");
     expect(workspace.created).toBe(false);
     expect(await readGit(workspace.cwd, ["rev-parse", "HEAD"])).toBe(branchTip);
