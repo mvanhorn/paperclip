@@ -1886,6 +1886,49 @@ describe("company skill mutation permissions", () => {
     expect(board.body.agents).toHaveLength(2);
   });
 
+  it.each(["self", "peer", null])("counts visible desired skills with missingOnly gap agent %s", async (gapAgentId) => {
+    const agents = gapAgentId ? [{
+      id: gapAgentId, name: gapAgentId, urlKey: gapAgentId, role: "engineer",
+      adapterType: "cursor", syncMode: "persistent",
+    }] : [];
+    mockCompanySkillService.coverage.mockResolvedValue({
+      skills: gapAgentId ? [{ id: "skill", key: "skill", name: "Skill", slug: "skill" }] : [],
+      agents,
+      cells: gapAgentId ? [{
+        agentId: gapAgentId, skillKey: "skill", desired: false,
+        versionId: null, actualState: null, syncMode: "persistent",
+      }] : [],
+      summary: {
+        agentCount: agents.length, skillCount: agents.length, desiredCellCount: 5,
+        gapCount: agents.length, unsupportedAgentCount: 0,
+      },
+      desiredCellCountByAgentId: { self: 2, peer: 3 },
+    });
+    mockAccessService.decide.mockImplementation(async (input: {
+      action: string; resource?: { type?: string; agentId?: string };
+    }) => ({
+      allowed: input.action === "agent:read"
+        || (input.action === "agent_config:read" && input.resource?.agentId === "self"),
+    }));
+
+    const res = await request(await createApp({
+      type: "agent", agentId: "self", companyId: "company-1",
+    })).get("/api/companies/company-1/skills/coverage?missingOnly=true");
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.summary).toEqual({
+      agentCount: gapAgentId === "self" ? 1 : 0,
+      skillCount: gapAgentId === "self" ? 1 : 0,
+      desiredCellCount: 2,
+      gapCount: gapAgentId === "self" ? 1 : 0,
+      unsupportedAgentCount: 0,
+    });
+    expect(res.body.desiredCellCountByAgentId).toBeUndefined();
+    if (gapAgentId !== "self") {
+      expect(res.body).toMatchObject({ agents: [], skills: [], cells: [] });
+    }
+  });
+
   it("accepts category updates and logs the skill mutation", async () => {
     const app = await createApp({ type: "board", source: "local_implicit", userId: "user-1" });
 

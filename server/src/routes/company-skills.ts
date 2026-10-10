@@ -295,7 +295,10 @@ export function companySkillRoutes(db: Db) {
     coverage: SkillCoverageWithDesiredCounts,
   ): Promise<CompanySkillCoverageResponse> {
     if (req.actor.type === "board") return coverage;
-    if (coverage.agents.length === 0) {
+    const agentIds = coverage.desiredCellCountByAgentId
+      ? Object.keys(coverage.desiredCellCountByAgentId)
+      : coverage.agents.map((agent) => agent.id);
+    if (agentIds.length === 0) {
       return coverage.cells.length === 0 ? coverage : emptySkillCoverageResponse();
     }
 
@@ -305,29 +308,35 @@ export function companySkillRoutes(db: Db) {
       resource: { type: "company", companyId },
     });
     const canReadCompanyConfigs = companyConfigDecision.allowed;
-    const visible = await Promise.all(coverage.agents.map(async (agent) => {
+    const visible = await Promise.all(agentIds.map(async (agentId) => {
       const readDecision = await access.decide({
         actor: req.actor,
         action: "agent:read",
-        resource: { type: "agent", companyId, agentId: agent.id },
+        resource: { type: "agent", companyId, agentId },
       });
       if (!readDecision.allowed) return false;
       if (canReadCompanyConfigs) return true;
       const configDecision = await access.decide({
         actor: req.actor,
         action: "agent_config:read",
-        resource: { type: "agent", companyId, agentId: agent.id },
+        resource: { type: "agent", companyId, agentId },
       });
       return configDecision.allowed;
     }));
     const allowedIds = new Set(
-      coverage.agents.filter((_, index) => visible[index]).map((agent) => agent.id),
+      agentIds.filter((_, index) => visible[index]),
     );
-    if (allowedIds.size === coverage.agents.length) return coverage;
+    if (allowedIds.size === agentIds.length) return coverage;
 
     const agents = coverage.agents.filter((agent) => allowedIds.has(agent.id));
     const cells = coverage.cells.filter((cell) => allowedIds.has(cell.agentId));
-    if (agents.length === 0 || cells.length === 0) return emptySkillCoverageResponse();
+    if (agents.length === 0 || cells.length === 0) {
+      const empty = emptySkillCoverageResponse();
+      if (coverage.desiredCellCountByAgentId) {
+        empty.summary.desiredCellCount = visibleDesiredCellCount(coverage, allowedIds, cells);
+      }
+      return empty;
+    }
 
     const skillKeys = new Set(cells.map((cell) => cell.skillKey));
     const skills = coverage.skills.filter((skill) => skillKeys.has(skill.key));

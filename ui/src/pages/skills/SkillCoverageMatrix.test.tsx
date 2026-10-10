@@ -157,6 +157,42 @@ async function renderMatrix() {
 }
 
 describe("SkillCoverageMatrix", () => {
+  it("pages desktop and mobile agent rows and resets when filters change", async () => {
+    const agents = Array.from({ length: 30 }, (_, index) => ({
+      ...coveragePayload.agents[0], id: `agent-${index}`, name: `Ada ${index}`, urlKey: `ada-${index}`,
+    }));
+    mockCoverage.mockResolvedValue({
+      ...coveragePayload,
+      agents,
+      cells: agents.flatMap((agent) => coveragePayload.cells
+        .filter((cell) => cell.agentId === adaId)
+        .map((cell) => ({ ...cell, agentId: agent.id }))),
+    });
+    const node = await renderMatrix();
+    const expectRows = (count: number) => {
+      expect(node.querySelectorAll("tbody tr")).toHaveLength(count);
+      expect(node.querySelectorAll("ul.md\\:hidden > li")).toHaveLength(count);
+    };
+    const showMore = () => Array.from(node.querySelectorAll("button"))
+      .find((button) => button.textContent === "Show more agents")!;
+
+    expectRows(25);
+    expect(node.textContent).toContain("Showing 25 of 30 agents");
+    await act(() => showMore().click());
+    expectRows(30);
+    expect(showMore()).toBeUndefined();
+    await act(() => node.querySelector<HTMLInputElement>('input[aria-label="Missing only"]')!.click());
+    expectRows(25);
+    await act(() => showMore().click());
+    expectRows(30);
+    await act(() => {
+      const input = node.querySelector<HTMLInputElement>('input[aria-label="Filter agents or skills"]')!;
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "Ada");
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await vi.waitFor(() => expectRows(25));
+  });
+
   it("renders desired, gap, and unsupported cells from the coverage payload", async () => {
     mockCoverage.mockResolvedValue(coveragePayload);
     const node = await renderMatrix();

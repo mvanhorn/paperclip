@@ -15,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 
+const AGENT_ROW_PAGE_SIZE = 25;
+
 type CoverageCellKind = "desired" | "gap" | "unsupported";
 
 function cellKind(cell: CompanySkillCoverageCell | undefined): CoverageCellKind {
@@ -36,6 +38,7 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [missingOnly, setMissingOnly] = useState(false);
+  const [agentRowLimit, setAgentRowLimit] = useState(AGENT_ROW_PAGE_SIZE);
   const q = search.trim();
 
   const coverageQuery = useQuery({
@@ -93,6 +96,8 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
     [missingOnly, payload, visibleSkillKeys],
   );
 
+  const renderedAgents = visibleAgents.slice(0, agentRowLimit);
+
   function attachGap(agentId: string, skillKey: string) {
     if (attachSkill.isPending) return;
     attachSkill.mutate({ agentId, skillKey });
@@ -137,7 +142,10 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
             <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setAgentRowLimit(AGENT_ROW_PAGE_SIZE);
+              }}
               placeholder="Filter agents or skills"
               className="h-8 pl-8"
               aria-label="Filter agents or skills"
@@ -146,7 +154,10 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
           <label className="inline-flex items-center gap-2 text-sm">
             <Checkbox
               checked={missingOnly}
-              onCheckedChange={(checked) => setMissingOnly(checked === true)}
+              onCheckedChange={(checked) => {
+                setMissingOnly(checked === true);
+                setAgentRowLimit(AGENT_ROW_PAGE_SIZE);
+              }}
               aria-label="Missing only"
             />
             Missing only
@@ -199,7 +210,7 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleAgents.map((agent) => (
+                  {renderedAgents.map((agent) => (
                     <tr key={agent.id} className="border-t border-border">
                       <th scope="row" className="sticky left-0 bg-background px-3 py-2 text-left font-medium">
                         <div className="flex flex-col gap-1">
@@ -237,7 +248,7 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
             </div>
 
             <ul className="flex flex-col gap-4 md:hidden">
-              {visibleAgents.map((agent) => (
+              {renderedAgents.map((agent) => (
                 <li key={agent.id} className="rounded-lg border border-border p-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -271,6 +282,18 @@ export function SkillCoverageMatrix({ companyId }: { companyId: string }) {
                 </li>
               ))}
             </ul>
+            {renderedAgents.length < visibleAgents.length ? (
+              <div className="mt-4 flex items-center gap-3 text-sm">
+                <span>Showing {renderedAgents.length} of {visibleAgents.length} agents</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setAgentRowLimit((limit) => limit + AGENT_ROW_PAGE_SIZE)}
+                >
+                  Show more agents
+                </Button>
+              </div>
+            ) : null}
           </>
         )}
       </div>
