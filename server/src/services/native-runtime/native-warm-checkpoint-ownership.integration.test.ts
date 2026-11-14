@@ -148,7 +148,9 @@ describeEmbeddedPostgres("managed warm checkpoint ownership", () => {
           sandboxLeaseAcquisition: { outcome: acquisition, providerLeaseId },
           runner: { execute: async (command: { args?: string[] }) => command.args?.[1] === "uname -s; uname -m"
             ? { exitCode: 0, timedOut: false, stdout: `${process.platform === "darwin" ? "Darwin" : "Linux"}\n${process.arch === "arm64" ? "arm64" : "x86_64"}\n`, stderr: "" }
-            : { exitCode: 1, timedOut: false, stdout: "", stderr: "" }, syncIn: async () => {} } } as never,
+            : command.args?.[2] === "paperclip-runner-port-holders"
+              ? { exitCode: 0, timedOut: false, stdout: "", stderr: "" }
+              : { exitCode: 1, timedOut: false, stdout: "", stderr: "" }, syncIn: async () => {} } } as never,
         instructionWorkingCopy: { runId: fixture.runId, root, checkpointWarm: async () => {
           if (instructionErrorWithDetach) { enteredClose(); await closeGate; throw initiatingError; }
           if (scenario === "instruction_error") throw initiatingError;
@@ -198,7 +200,7 @@ describeEmbeddedPostgres("managed warm checkpoint ownership", () => {
         expect(result.errorCode).toBe("native_provider_overloaded");
       }
       expect(state.checkpoint).toBeTypeOf("function");
-      if (invalidated) expect(closeFailures).toEqual(["Error: native_harness_storage_owner_missing"]);
+      if (invalidated || renewalLoss) expect(closeFailures).toEqual(["Error: native_runner_checkpoint_owner_lost"]);
       else expect(closeFailures).toEqual([]);
       expect(ownersAtClose).toHaveLength(1);
       expect(ownersAtClose[0].leaseOwner).not.toBeNull();

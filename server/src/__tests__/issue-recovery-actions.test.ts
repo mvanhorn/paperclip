@@ -99,6 +99,7 @@ describe("issueRecoveryActionService", () => {
       limit() { return Promise.resolve([]); } };
     const fakeDb = {
       async transaction<T>(fn: (tx: unknown) => Promise<T>): Promise<T> { return fn(fakeDb); },
+      execute: vi.fn(async () => [{ pendingPreparationContinuation: false }]),
       select: vi.fn(() => query),
       insert: vi.fn(() => ({ values: () => ({ returning: async () => { throw error; } }) })),
     };
@@ -130,6 +131,7 @@ describe("issueRecoveryActionService", () => {
 
     const fakeDb = {
       async transaction<T>(fn: (tx: unknown) => Promise<T>): Promise<T> { return fn(fakeDb); },
+      execute: vi.fn(async () => [{ pendingPreparationContinuation: false }]),
       select: vi.fn(() => makeSelectQuery(selectResults.shift() ?? [])),
       update: vi.fn(() => ({
         set: vi.fn(() => ({
@@ -1854,7 +1856,7 @@ describeEmbeddedPostgres("issue recovery actions", () => {
           cleanliness: "dirty",
         }),
       }),
-      nextAction: expect.stringContaining("git worktree branch incoherence"),
+      nextAction: expect.stringContaining("workspace no longer matches its branch"),
       wakePolicy: expect.objectContaining({
         type: "board_escalation",
         reason: "workspace_validation_failed",
