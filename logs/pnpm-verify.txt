@@ -1,0 +1,13 @@
+
+> paperclip@ verify /workspace
+> node --import ./cli/node_modules/tsx/dist/loader.mjs scripts/ensure-workspace-package-links.ts && node scripts/local-verify.mjs
+
+[paperclip] detected stale workspace package links for packages/plugins/examples/plugin-orchestration-smoke-example; relinking dependencies...
+[paperclip]   @paperclipai/shared: missing -> /workspace/packages/shared
+[verify] Base b5447432bd0d; 7 changed paths, including local edits
+[verify] Broader verification required
+[verify] Global CI input changed: doc/CLI.md
+[verify] Required CI coverage: typecheck_release_registry, general_tests, docker_context_integrity, sandbox_provider_tests, verify_paperclip_runner, build, verify_serialized_server, canary_dry_run, e2e_shards, verify_runner_e2e_support
+[verify] Local Vitest coverage does not replace required CI, typecheck/build, browser, release, or platform-specific checks.
+[verify] Run focused checks and use required CI for broad coverage, or explicitly run pnpm verify --full.
+ ELIFECYCLE  Command failed with exit code 2.

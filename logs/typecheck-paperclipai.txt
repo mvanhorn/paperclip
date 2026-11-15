@@ -1,0 +1,4 @@
+
+> paperclipai@0.3.1 typecheck /workspace/cli
+> tsc --noEmit
+

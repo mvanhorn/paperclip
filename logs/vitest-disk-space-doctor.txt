@@ -1,0 +1,70 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:7:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.3 /workspace
+
+┌   paperclip doctor 
+│
+│  ✓ Config file: Valid config at /tmp/paperclip-doctor-9gL1WC/.paperclip/config.json
+│
+│  ✓ Deployment/auth mode: local_trusted mode is configured for loopback-only access
+│
+│  ✗ Agent JWT secret: PAPERCLIP_AGENT_JWT_SECRET missing from environment and /tmp/paperclip-doctor-9gL1WC/.paperclip/.env
+│
+│    Run with --repair to create /tmp/paperclip-doctor-9gL1WC/.paperclip/.env containing PAPERCLIP_AGENT_JWT_SECRET
+│
+◆  Repaired: Agent JWT secret
+│
+│  ✓ Agent JWT secret: PAPERCLIP_AGENT_JWT_SECRET is set in environment
+│
+│  ! Secrets adapter: Secrets key file does not exist yet: /tmp/paperclip-doctor-9gL1WC/runtime/secrets/master.key
+│
+│    Run with --repair to create a local encrypted secrets key file
+│
+◆  Repaired: Secrets adapter
+│
+│  ✓ Secrets adapter: Local encrypted provider configured with key file /tmp/paperclip-doctor-9gL1WC/runtime/secrets/master.key
+│
+│  ✓ Storage: Local disk storage is writable: /tmp/paperclip-doctor-9gL1WC/runtime/storage
+│
+│  ✓ Database: Embedded PostgreSQL configured at /tmp/paperclip-doctor-9gL1WC/runtime/db (port 55432)
+│
+│  ✓ LLM provider: No LLM provider configured (optional)
+│
+│  ✓ Log directory: Log directory is writable: /tmp/paperclip-doctor-9gL1WC/runtime/logs
+│
+│  ✓ Disk space: 242.2 GiB free (96%) on / for data, storage, logs, backups, instance
+│
+│  ✓ Server port: Port 46767 is available
+│
+│  ✓ Node.js runtime: Node.js 24.22.3
+│
+│  ✓ Managed install: Not present (optional for npx, global npm, and source-checkout usage)
+│
+│  ✓ Background service: No usable systemd user manager was detected (common in containers and WSL1). Use paperclipai run instead.
+│
+◇  Summary ───╮
+│             │
+│  13 passed  │
+│             │
+├─────────────╯
+│
+└  All checks passed!
+
+┌   paperclip doctor 
+│
+◇  Summary ───╮
+│             │
+│  13 passed  │
+│             │
+├─────────────╯
+│
+└  All checks passed!
+
+
+ Test Files  2 passed (2)
+      Tests  12 passed (12)
+   Start at  17:42:41
+   Duration  2.91s (transform 60%, import 29%, tests 11%)
+

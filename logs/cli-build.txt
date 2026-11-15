@@ -1,0 +1,4 @@
+
+> paperclipai@0.3.1 build /workspace/cli
+> node --input-type=module -e "import esbuild from 'esbuild'; import config from './esbuild.config.mjs'; await esbuild.build(config);" && chmod +x dist/index.js
+

@@ -1,0 +1,37 @@
+=== out.mp4 ===
+[STREAM]
+codec_name=h264
+width=1920
+height=1080
+pix_fmt=yuv420p
+r_frame_rate=30/1
+avg_frame_rate=30/1
+duration=24.000000
+nb_frames=720
+nb_read_frames=720
+[/STREAM]
+[FORMAT]
+duration=24.000000
+size=21878016
+bit_rate=7292672
+[/FORMAT]
+
+=== preview.gif ===
+[STREAM]
+codec_name=gif
+width=960
+height=540
+r_frame_rate=12/1
+avg_frame_rate=25/2
+duration=24.000000
+nb_frames=269
+nb_read_frames=269
+[/STREAM]
+[FORMAT]
+duration=24.000000
+size=3593166
+[/FORMAT]
+
+file sizes:
+/tmp/paperclip-doctor-demo-artifacts/out.mp4 21878016 bytes
+/tmp/paperclip-doctor-demo-artifacts/preview.gif 3593166 bytes

@@ -1,0 +1,163 @@
+Paperclip doctor disk-space check — captured command output
+cwd=/workspace
+node=v24.22.3
+
+$ df -h /
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vdc        254G   12G  243G   5% /
+
+$ pnpm paperclipai doctor --data-dir /tmp/paperclip-doctor-demo --config /tmp/paperclip-doctor-demo/instances/default/config.json --repair --yes
+Update available: 2026.1106.0 — run `paperclipai update`
+
+██████╗  █████╗ ██████╗ ███████╗██████╗  ██████╗██╗     ██╗██████╗ 
+██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔════╝██║     ██║██╔══██╗
+██████╔╝███████║██████╔╝█████╗  ██████╔╝██║     ██║     ██║██████╔╝
+██╔═══╝ ██╔══██║██╔═══╝ ██╔══╝  ██╔══██╗██║     ██║     ██║██╔═══╝ 
+██║     ██║  ██║██║     ███████╗██║  ██║╚██████╗███████╗██║██║     
+╚═╝     ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝╚═╝     
+  ───────────────────────────────────────────────────────
+  The app people use to manage AI agents for work
+
+┌   paperclip doctor 
+│
+│  ✓ Config file: Valid config at /tmp/paperclip-doctor-demo/instances/default/config.json
+│
+│  ✓ Deployment/auth mode: local_trusted mode is configured for loopback-only access
+│
+│  ✗ Agent JWT secret: PAPERCLIP_AGENT_JWT_SECRET missing from environment and /tmp/paperclip-doctor-demo/instances/default/.env
+│
+│    Run with --repair to create /tmp/paperclip-doctor-demo/instances/default/.env containing PAPERCLIP_AGENT_JWT_SECRET
+│
+◆  Repaired: Agent JWT secret
+│
+│  ✓ Agent JWT secret: PAPERCLIP_AGENT_JWT_SECRET is set in environment
+│
+│  ! Secrets adapter: Secrets key file does not exist yet: /tmp/paperclip-doctor-demo/instances/default/secrets/master.key
+│
+│    Run with --repair to create a local encrypted secrets key file
+│
+◆  Repaired: Secrets adapter
+│
+│  ✓ Secrets adapter: Local encrypted provider configured with key file /tmp/paperclip-doctor-demo/instances/default/secrets/master.key
+│
+│  ✓ Storage: Local disk storage is writable: /tmp/paperclip-doctor-demo/instances/default/data/storage
+│
+│  ✓ Database: Embedded PostgreSQL configured at /tmp/paperclip-doctor-demo/instances/default/db (port 55432)
+│
+│  ✓ LLM provider: No LLM provider configured (optional)
+│
+│  ✓ Log directory: Log directory is writable: /tmp/paperclip-doctor-demo/instances/default/logs
+│
+│  ✓ Disk space: 242.1 GiB free (96%) on / for data, storage, logs, backups, instance
+│
+│  ✓ Server port: Port 33111 is available
+│
+│  ✓ Node.js runtime: Node.js 24.22.3
+│
+│  ✓ Managed install: Not present (optional for npx, global npm, and source-checkout usage)
+│
+│  ✓ Background service: No usable systemd user manager was detected (common in containers and WSL1). Use paperclipai run instead.
+│
+◇  Summary ───╮
+│             │
+│  13 passed  │
+│             │
+├─────────────╯
+│
+└  All checks passed!
+
+exit=0
+
+$ fallocate -l 2048M /tmp/paperclip-low-disk.img
+$ mkfs.ext4 -F -m 0 -L pclow /tmp/paperclip-low-disk.img
+mke2fs 1.47.0 (5-Feb-2023)
+Creating filesystem with 524288 4k blocks and 131072 inodes
+Filesystem UUID: cad45763-f90a-4fd1-9a52-e2090ef2b31e
+Writing superblocks and filesystem accounting information: done
+$ sudo mkdir -p /mnt/paperclip-low && sudo mount -o loop /tmp/paperclip-low-disk.img /mnt/paperclip-low && sudo chown 1000:1000 /mnt/paperclip-low
+$ df -h /mnt/paperclip-low
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/loop0      2.0G   28K  1.9G   1% /mnt/paperclip-low
+$ df -B1 /mnt/paperclip-low
+Filesystem      1B-blocks  Used  Available Use% Mounted on
+/dev/loop0     2040373248 28672 2023567360   1% /mnt/paperclip-low
+$ fallocate -l 1918709760 /mnt/paperclip-low/fill.bin
+$ df -h /mnt/paperclip-low
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/loop0      2.0G  1.8G  100M  95% /mnt/paperclip-low
+$ df -B1 /mnt/paperclip-low
+Filesystem      1B-blocks       Used Available Use% Mounted on
+/dev/loop0     2040373248 1918742528 104853504  95% /mnt/paperclip-low
+updated backup.dir to /mnt/paperclip-low/backups
+
+$ pnpm paperclipai doctor --data-dir /tmp/paperclip-doctor-demo --config /tmp/paperclip-doctor-demo/instances/default/config.json
+Update available: 2026.1106.0 — run `paperclipai update`
+
+██████╗  █████╗ ██████╗ ███████╗██████╗  ██████╗██╗     ██╗██████╗ 
+██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔════╝██║     ██║██╔══██╗
+██████╔╝███████║██████╔╝█████╗  ██████╔╝██║     ██║     ██║██████╔╝
+██╔═══╝ ██╔══██║██╔═══╝ ██╔══╝  ██╔══██╗██║     ██║     ██║██╔═══╝ 
+██║     ██║  ██║██║     ███████╗██║  ██║╚██████╗███████╗██║██║     
+╚═╝     ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝╚═╝     
+  ───────────────────────────────────────────────────────
+  The app people use to manage AI agents for work
+
+┌   paperclip doctor 
+│
+│  ✓ Config file: Valid config at /tmp/paperclip-doctor-demo/instances/default/config.json
+│
+│  ✓ Deployment/auth mode: local_trusted mode is configured for loopback-only access
+│
+│  ✓ Agent JWT secret: PAPERCLIP_AGENT_JWT_SECRET is set in environment
+│
+│  ✓ Secrets adapter: Local encrypted provider configured with key file /tmp/paperclip-doctor-demo/instances/default/secrets/master.key
+│
+│  ✓ Storage: Local disk storage is writable: /tmp/paperclip-doctor-demo/instances/default/data/storage
+│
+│  ✓ Database: Embedded PostgreSQL configured at /tmp/paperclip-doctor-demo/instances/default/db (port 55432)
+│
+│  ✓ LLM provider: No LLM provider configured (optional)
+│
+│  ✓ Log directory: Log directory is writable: /tmp/paperclip-doctor-demo/instances/default/logs
+│
+│  ! Disk space: 99.9 MiB free (5%) on /mnt/paperclip-low (backups). Less than 194.5 MiB free (10% of volume size). embedded Postgres may stop accepting writes; 242.1 GiB free (96%) on / for data, storage, logs, instance
+│
+│    Free disk space on the affected volume, or move the backup directory with `paperclipai configure --section database`
+│
+│  ✓ Server port: Port 33111 is available
+│
+│  ✓ Node.js runtime: Node.js 24.22.3
+│
+│  ✓ Managed install: Not present (optional for npx, global npm, and source-checkout usage)
+│
+│  ✓ Background service: No usable systemd user manager was detected (common in containers and WSL1). Use paperclipai run instead.
+│
+◇  Summary ───────────────╮
+│                         │
+│  12 passed, 1 warnings  │
+│                         │
+├─────────────────────────╯
+│
+└  All critical checks passed with some warnings.
+
+exit=0
+
+$ sed -n '94,104p' cli/src/commands/run.ts
+  p.log.step("Running doctor checks...");
+  const summary = await doctor({
+    config: configPath,
+    repair: opts.repair ?? true,
+    yes: opts.yes ?? true,
+  });
+
+  if (summary.failed > 0) {
+    p.log.error("Doctor found blocking issues. Not starting server.");
+    process.exit(1);
+  }
+
+$ timeout --signal=INT 45s pnpm paperclipai run --data-dir /tmp/paperclip-doctor-demo --config /tmp/paperclip-doctor-demo/instances/default/config.json --force
+◇  Starting Paperclip server...
+[17:46:24] INFO: Using embedded PostgreSQL because no DATABASE_URL set (dataDir=/tmp/paperclip-doctor-demo/instances/default/db, port=55432)
+[17:46:26] INFO: Embedded PostgreSQL ready
+[17:46:27] INFO: Server listener bound on 127.0.0.1:33111; startup recovery in progress
+run_exit=124
