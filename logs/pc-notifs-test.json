@@ -1,0 +1,15 @@
+[
+  {
+    "title": "Paperclip",
+    "options": {
+      "body": "Desktop notifications are on.",
+      "tag": "paperclip:desktop-notification-test",
+      "icon": "/favicon-32x32.png",
+      "data": {
+        "href": null
+      }
+    },
+    "vis": "visible",
+    "at": 1794765878795
+  }
+]

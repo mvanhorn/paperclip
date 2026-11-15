@@ -1,0 +1,136 @@
+# commands.log — exact captured command output for background-tab-notifications
+# cwd=/workspace node=v24.22.3 pnpm=9.15.4
+
+$ git rev-parse --abbrev-ref HEAD && git log -1 --format=fuller
+feat/background-tab-notifications
+commit 7090f72f40dd4770d74eae976a1f73260a2ddb14
+Author:     Matt Van Horn <mvanhorn@users.noreply.github.com>
+AuthorDate: Sun Nov 15 17:43:27 2026 +0000
+Commit:     Matt Van Horn <mvanhorn@users.noreply.github.com>
+CommitDate: Sun Nov 15 17:43:46 2026 +0000
+
+    feat(ui): show desktop notifications for important events while the tab is hidden
+exit:0
+
+$ pnpm verify
+
+> paperclip@ verify /workspace
+> node --import ./cli/node_modules/tsx/dist/loader.mjs scripts/ensure-workspace-package-links.ts && node scripts/local-verify.mjs
+
+[paperclip] detected stale workspace package links for packages/plugins/examples/plugin-orchestration-smoke-example; relinking dependencies...
+[paperclip]   @paperclipai/shared: missing -> /workspace/packages/shared
+[verify] Base b5447432bd0d; 12 changed paths, including local edits
+[verify] Broader verification required
+[verify] Global CI input changed: doc/TOASTS.md
+[verify] Required CI coverage: typecheck_release_registry, general_tests, docker_context_integrity, sandbox_provider_tests, verify_paperclip_runner, build, verify_serialized_server, canary_dry_run, e2e_shards, verify_runner_e2e_support
+[verify] Local Vitest coverage does not replace required CI, typecheck/build, browser, release, or platform-specific checks.
+[verify] Run focused checks and use required CI for broad coverage, or explicitly run pnpm verify --full.
+ ELIFECYCLE  Command failed with exit code 2.
+exit:2
+
+$ pnpm vitest run ui/src/lib/desktop-notifications.test.ts ui/src/components/DesktopNotificationsSettings.test.tsx ui/src/context/ToastContext.test.tsx ui/src/pages/ProfileSettings.tsx --reporter=dot
+(focused files; ProfileSettings has no colocated extra test file beyond existing suite coverage via DesktopNotificationsSettings + ToastContext)
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:7:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.3 /workspace
+
+
+ Test Files  4 passed (4)
+      Tests  42 passed (42)
+   Start at  17:41:40
+   Duration  2.66s (transform 41%, environment 29%, import 23%, tests 6%)
+
+  Transform  |@paperclipai/ui| transforming modules took 2.32s · 41% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+exit:0
+
+$ pnpm --filter @paperclipai/plugin-sdk ensure-build-deps
+
+> @paperclipai/plugin-sdk@1.0.0 ensure-build-deps /workspace/packages/plugins/sdk
+> node ../../../scripts/ensure-plugin-build-deps.mjs
+
+[paperclip] Building @paperclipai/shared...
+[paperclip] Building @paperclipai/plugin-sdk...
+exit:0
+
+$ pnpm --filter @paperclipai/ui typecheck
+
+> @paperclipai/ui@0.3.1 typecheck /workspace/ui
+> node ../scripts/storybook-catalog.mjs && node ../scripts/run-tsc.mjs -b
+
+Storybook map: 360 files, 3303 stories. Structure only; no runtime proof.
+exit:0
+
+$ pnpm --filter @paperclipai/ui build
+dist/assets/swimlanes-N4OXWK64-DXDuqFM7.js              115.65 kB │ gzip:    41.72 kB
+dist/assets/chunk-XC4XBNZT-Ci7ut27Z.js                  119.65 kB │ gzip:    30.65 kB
+dist/assets/sequenceDiagram-ZO4K6R2Y-C99bF84F.js        119.77 kB │ gzip:    32.36 kB
+dist/assets/Secrets-DrkeMTrj.js                         151.73 kB │ gzip:    39.23 kB
+dist/assets/architectureDiagram-47P4ROYG-Bg9LEfZV.js    155.07 kB │ gzip:    44.35 kB
+dist/assets/DesignGuide-AxCvw7lY.js                     158.03 kB │ gzip:    41.88 kB
+dist/assets/usecaseDiagram-VIAY4XPW-MO7EJ6S4.js         195.69 kB │ gzip:    52.89 kB
+dist/assets/collections-C_O18LVZ.js                     201.78 kB │ gzip:    58.75 kB
+dist/assets/AgentAdvancedTab-BtWd8gjz.js                215.23 kB │ gzip:    61.47 kB
+dist/assets/chunk-VPRB5NB3-3dpGcCVf.js                  246.89 kB │ gzip:    42.33 kB
+dist/assets/AgentDetailPage-BTOBf45Y.js                 263.45 kB │ gzip:    72.09 kB
+dist/assets/katex-Du_FPwxl.js                           264.40 kB │ gzip:    79.45 kB
+dist/assets/CompanyEnvironments-CVW48lpq.js             409.44 kB │ gzip:   106.36 kB
+dist/assets/cytoscape.esm-C2vp4vBx.js                   465.72 kB │ gzip:   149.67 kB
+dist/assets/prod-C6Q7tISe.js                            493.71 kB │ gzip:   166.56 kB
+dist/assets/runtime-IAg0vdY9.js                         578.56 kB │ gzip:   151.24 kB
+dist/assets/dist-Cd7wdKYE.js                            591.36 kB │ gzip:   157.91 kB
+dist/assets/chunk-NGNAAXSQ-e5XI1hSt.js                  659.17 kB │ gzip:   137.38 kB
+dist/assets/elk-IJKZMXRS-CSMblI4h.js                  1,597.05 kB │ gzip:   512.13 kB
+dist/assets/issue-detail-CpzcDqJD.js                  2,978.68 kB │ gzip:   843.33 kB
+dist/assets/index-WWlhjkRC.js                         3,858.60 kB │ gzip: 1,181.01 kB
+
+[33m[INEFFECTIVE_DYNAMIC_IMPORT] [0msrc/components/MarkdownEditor.tsx is dynamically imported by src/plugins/bridge-init.ts but also statically imported by src/components/AgentConfigForm.tsx, src/components/InlineEditor.tsx, src/components/IssueChatThread.tsx, src/components/IssueDocumentsSection.tsx, src/components/NewGoalDialog.tsx, ..., dynamic import will not move module into another chunk.
+
+[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 7.37s
+exit:0
+
+$ pnpm check:token-gates
+
+> paperclip@ check:token-gates /workspace
+> node scripts/check-token-gates.mjs && node scripts/sync-agent-palette-tokens.mjs --check && node scripts/sync-cliplab-character.mjs --check
+
+check-token-gates summary
+  Files scanned:                 1592
+  Allowlist entries loaded:      33
+  Allowlisted issues skipped:    106
+
+  Gate 1 (color literals):       CLEAN
+  Gate 2 (arbitrary bracket vals): CLEAN
+  Gate 3 (raw font-size):        CLEAN
+  Gate 4 (legacy hsl(var())):    CLEAN
+
+All gates clean.
+cliplab character in sync
+exit:0
+
+$ pnpm vitest run ui/src/lib/desktop-notifications.test.ts ui/src/components/DesktopNotificationsSettings.test.tsx ui/src/context/ToastContext.test.tsx ui/src/context/LiveUpdatesProvider.hook.test.tsx ui/src/context/LiveUpdatesProvider.recovery.test.tsx --reporter=dot
+# vitest focused after live-socket-while-hidden
+
+ RUN  v5.0.3 /workspace
+
+······················································································································
+
+ Test Files  5 passed (5)
+      Tests  118 passed (118)
+   Start at  18:15:17
+   Duration  4.46s (transform 38%, tests 26%, environment 19%, import 17%)
+
+  Transform  |@paperclipai/ui| transforming modules took 3.67s · 38% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+exit:0

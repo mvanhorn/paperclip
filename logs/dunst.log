@@ -1,0 +1,22 @@
+WARNING: '(80, 240)': No digits found.
+CRITICAL: [dbus_cb_name_lost:1152] Cannot acquire 'org.freedesktop.Notifications': Name is acquired by 'dunst' with PID '11549'.
+WARNING: '(120, 320)': No digits found.
+WARNING: No icon found in path: 'dialog-warning'
+WARNING: No icon found in path: 'dialog-information'
+WARNING: No icon found in path: 'dialog-information'
+CRITICAL: Source ID 16 was not found when attempting to remove it
+CRITICAL: Source ID 25 was not found when attempting to remove it
+CRITICAL: Source ID 36 was not found when attempting to remove it
+CRITICAL: Source ID 47 was not found when attempting to remove it
+CRITICAL: Source ID 58 was not found when attempting to remove it
+CRITICAL: Source ID 69 was not found when attempting to remove it
+CRITICAL: Source ID 80 was not found when attempting to remove it
+CRITICAL: Source ID 101 was not found when attempting to remove it
+CRITICAL: Source ID 120 was not found when attempting to remove it
+CRITICAL: Source ID 136 was not found when attempting to remove it
+CRITICAL: Source ID 145 was not found when attempting to remove it
+CRITICAL: Source ID 177 was not found when attempting to remove it
+CRITICAL: Source ID 186 was not found when attempting to remove it
+CRITICAL: Source ID 217 was not found when attempting to remove it
+CRITICAL: Source ID 228 was not found when attempting to remove it
+CRITICAL: Source ID 242 was not found when attempting to remove it

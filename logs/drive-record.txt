@@ -1,0 +1,89 @@
+2026-11-15T18:05:32.386Z record start
+2026-11-15T18:05:38.662Z SCENE settings
+2026-11-15T18:05:38.775Z screenshot /tmp/pc-demo/screenshots/10-record-settings.png
+2026-11-15T18:05:38.850Z desktop-screenshot /tmp/pc-demo/screenshots/10-record-settings-display.png
+2026-11-15T18:05:41.983Z SCENE test-click
+2026-11-15T18:05:44.307Z screenshot /tmp/pc-demo/screenshots/11-record-test-banner.png
+2026-11-15T18:05:44.388Z desktop-screenshot /tmp/pc-demo/screenshots/11-record-test-banner-display.png
+2026-11-15T18:05:45.615Z SCENE hidden-fail
+2026-11-15T18:05:46.832Z hidden fail 13663df5-7cb0-42d2-a616-739837f3a406 failed issue=5105959b-f4a5-4d4f-aa15-3f69cafda059
+2026-11-15T18:05:53.339Z screenshot /tmp/pc-demo/screenshots/12-hidden-fail-other-tab.png
+2026-11-15T18:05:53.441Z desktop-screenshot /tmp/pc-demo/screenshots/12-hidden-fail-other-tab-display.png
+2026-11-15T18:05:53.450Z SCENE click-notification
+2026-11-15T18:05:56.021Z screenshot /tmp/pc-demo/screenshots/13-after-notification-click.png
+2026-11-15T18:05:56.085Z desktop-screenshot /tmp/pc-demo/screenshots/13-after-notification-click-display.png
+2026-11-15T18:05:58.498Z SCENE hidden-success
+2026-11-15T18:05:59.255Z quiet run b1ff19b7-d5da-4c36-9000-983b59db1652 failed issue=b5980646-4865-40ac-8088-9dda09eb675a
+2026-11-15T18:06:01.541Z screenshot /tmp/pc-demo/screenshots/14-hidden-success-no-banner.png
+2026-11-15T18:06:01.609Z desktop-screenshot /tmp/pc-demo/screenshots/14-hidden-success-no-banner-display.png
+2026-11-15T18:06:04.272Z SCENE visible-fail
+2026-11-15T18:06:05.021Z visible fail b38393bf-e200-493d-b923-83d65ef75828 failed issue=df62d70f-718f-4896-9d68-61b5419e4bc5
+2026-11-15T18:06:06.716Z screenshot /tmp/pc-demo/screenshots/15-visible-fail-toast-only.png
+2026-11-15T18:06:06.785Z desktop-screenshot /tmp/pc-demo/screenshots/15-visible-fail-toast-only-display.png
+2026-11-15T18:06:06.785Z SCENE terminal-handoff
+2026-11-15T18:06:06.787Z record scenes done
+2026-11-15T18:07:38.729Z record start
+2026-11-15T18:07:44.271Z SCENE settings
+2026-11-15T18:07:44.343Z screenshot /tmp/pc-demo/screenshots/10-record-settings.png
+2026-11-15T18:07:44.409Z desktop-screenshot /tmp/pc-demo/screenshots/10-record-settings-display.png
+2026-11-15T18:07:47.542Z SCENE test-click
+2026-11-15T18:07:49.854Z screenshot /tmp/pc-demo/screenshots/11-record-test-banner.png
+2026-11-15T18:07:49.933Z desktop-screenshot /tmp/pc-demo/screenshots/11-record-test-banner-display.png
+2026-11-15T18:07:51.157Z SCENE hidden-fail
+2026-11-15T18:07:52.476Z hidden fail 94e1c9b7-3517-4de0-911e-6b1ec3621c4a failed issue=43223f8e-86d5-41c6-9bdd-22fec97892d6
+2026-11-15T18:07:58.539Z hidden pcNotifs [{"title":"Paperclip","options":{"body":"Desktop notifications are on.","tag":"paperclip:desktop-notification-test","icon":"/favicon-32x32.png","data":{"href":null}},"vis":"visible","at":1794766067571}]
+2026-11-15T18:08:00.807Z screenshot /tmp/pc-demo/screenshots/12-hidden-fail-other-tab.png
+2026-11-15T18:08:00.875Z desktop-screenshot /tmp/pc-demo/screenshots/12-hidden-fail-other-tab-display.png
+2026-11-15T18:08:00.882Z SCENE click-notification
+2026-11-15T18:08:02.682Z screenshot /tmp/pc-demo/screenshots/13-after-notification-click.png
+2026-11-15T18:08:02.753Z desktop-screenshot /tmp/pc-demo/screenshots/13-after-notification-click-display.png
+2026-11-15T18:08:05.167Z SCENE hidden-success
+2026-11-15T18:08:05.974Z quiet run 4414a6d6-d980-42a2-81c4-cf4f1a597357 failed issue=507c6398-c981-4624-bd88-78c35e55b596
+2026-11-15T18:08:08.235Z screenshot /tmp/pc-demo/screenshots/14-hidden-success-no-banner.png
+2026-11-15T18:08:08.297Z desktop-screenshot /tmp/pc-demo/screenshots/14-hidden-success-no-banner-display.png
+2026-11-15T18:08:10.792Z SCENE visible-fail
+2026-11-15T18:08:11.531Z visible fail 31b08b00-2eae-4f46-8cae-da91f590ae85 failed issue=533179f5-87ce-4ae5-94af-4e5646634a25
+2026-11-15T18:08:13.223Z screenshot /tmp/pc-demo/screenshots/15-visible-fail-toast-only.png
+2026-11-15T18:08:13.301Z desktop-screenshot /tmp/pc-demo/screenshots/15-visible-fail-toast-only-display.png
+2026-11-15T18:08:13.301Z SCENE terminal-handoff
+2026-11-15T18:08:13.302Z record scenes done
+2026-11-15T18:31:41.440Z record start
+2026-11-15T18:31:47.739Z SCENE settings
+2026-11-15T18:31:47.840Z screenshot /tmp/pc-demo/screenshots/10-record-settings.png
+2026-11-15T18:31:47.917Z desktop-screenshot /tmp/pc-demo/screenshots/10-record-settings-display.png status=0 size=140643
+2026-11-15T18:31:51.055Z SCENE test-click
+2026-11-15T18:31:54.749Z screenshot /tmp/pc-demo/screenshots/11-record-test-banner.png
+2026-11-15T18:31:54.831Z desktop-screenshot /tmp/pc-demo/screenshots/11-record-test-banner-display.png status=0 size=199680
+2026-11-15T18:31:54.874Z paperclip visibility after hide: {"visibilityState":"hidden","hidden":false}
+2026-11-15T18:31:56.076Z SCENE hidden-fail
+2026-11-15T18:31:57.067Z hidden fail 8f2ba7d7-412d-4f79-bfce-abc0a27594cd failed issue=54f147c9-7930-4170-a4ea-bdce89ddce45
+2026-11-15T18:31:57.070Z hidden pcNotifs [{"title":"Paperclip","options":{"body":"Desktop notifications are on.","tag":"paperclip:desktop-notification-test","icon":"/favicon-32x32.png","data":{"href":null}},"vis":"visible","at":1794767512447},{"title":"Failing Runner run failed","options":{"body":"Process exited with code 1","tag":"run-status:8f2ba7d7-412d-4f79-bfce-abc0a27594cd:failed","icon":"/favicon-32x32.png","data":{"href":"/agents/badebfc6-b885-4875-86ee-f79bd5e0a7af/runs/8f2ba7d7-412d-4f79-bfce-abc0a27594cd"}},"vis":"hidden","at":1794767517003}]
+2026-11-15T18:31:57.076Z chrome bounds windowId=1367264151 {"left":20,"top":20,"width":1140,"height":1040} result={}
+2026-11-15T18:31:57.091Z chrome xdotool id=8388610
+2026-11-15T18:31:57.102Z xdotool size status=0 err= move status=0
+2026-11-15T18:31:57.105Z xwin      0x400002 "Dunst": ("Dunst" "Dunst")  755x208+1124+41  +1124+41 |      0xa00001 "chrome": ("chrome" "Chrome")  10x10+10+10  +10+10 |         0x800002 "Working in another tab - Google Chrome": ("google-chrome (/tmp/pc-demo/chrome-profile)" "Google-chrome")  1140x1040+0+0  +20+20
+2026-11-15T18:31:57.130Z dunst count after hidden fail
+              Waiting: 0
+  Currently displayed: 1
+              History: 19
+
+2026-11-15T18:31:58.115Z screenshot /tmp/pc-demo/screenshots/12-hidden-fail-other-tab.png
+2026-11-15T18:31:58.178Z desktop-screenshot /tmp/pc-demo/screenshots/12-hidden-fail-other-tab-display.png status=0 size=75238
+2026-11-15T18:31:58.184Z SCENE click-notification
+2026-11-15T18:31:58.409Z paperclip visibility after show: visible
+2026-11-15T18:31:58.425Z chrome bounds windowId=1367264151 {"left":0,"top":0,"width":1920,"height":1080} result={}
+2026-11-15T18:32:00.230Z screenshot /tmp/pc-demo/screenshots/13-after-notification-click.png
+2026-11-15T18:32:00.315Z desktop-screenshot /tmp/pc-demo/screenshots/13-after-notification-click-display.png status=0 size=235472
+2026-11-15T18:32:01.968Z paperclip visibility after hide: {"visibilityState":"hidden","hidden":false}
+2026-11-15T18:32:02.771Z SCENE hidden-success
+2026-11-15T18:32:04.156Z quiet run ee49e6ca-742d-4bf3-ab55-21649e5cccc5 succeeded issue=40912010-ff99-4fc9-862b-fdad9a2c1d9d
+2026-11-15T18:32:06.423Z screenshot /tmp/pc-demo/screenshots/14-hidden-success-no-banner.png
+2026-11-15T18:32:06.488Z desktop-screenshot /tmp/pc-demo/screenshots/14-hidden-success-no-banner-display.png status=0 size=79081
+2026-11-15T18:32:06.687Z paperclip visibility after show: visible
+2026-11-15T18:32:06.694Z chrome bounds windowId=1367264151 {"left":0,"top":0,"width":1920,"height":1080} result={}
+2026-11-15T18:32:09.531Z SCENE visible-fail
+2026-11-15T18:32:10.270Z visible fail a98bcca9-2e25-4a71-8755-8001c301a23e failed issue=0d783f68-a358-47d2-8ddf-38c579b2082b
+2026-11-15T18:32:11.955Z screenshot /tmp/pc-demo/screenshots/15-visible-fail-toast-only.png
+2026-11-15T18:32:12.027Z desktop-screenshot /tmp/pc-demo/screenshots/15-visible-fail-toast-only-display.png status=0 size=148995
+2026-11-15T18:32:12.027Z SCENE terminal-handoff
+2026-11-15T18:32:12.029Z record scenes done

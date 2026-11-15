@@ -1,0 +1,21 @@
+{
+  "vis": "hidden",
+  "hidden": false,
+  "notifs": [
+    {
+      "title": "Failing Runner run failed",
+      "options": {
+        "body": "Process exited with code 1",
+        "tag": "run-status:96ba7803-b7d3-4f12-89cf-47c49a6f1d02:failed",
+        "icon": "/favicon-32x32.png",
+        "data": {
+          "href": "/agents/badebfc6-b885-4875-86ee-f79bd5e0a7af/runs/96ba7803-b7d3-4f12-89cf-47c49a6f1d02"
+        }
+      },
+      "vis": "hidden",
+      "at": 1794767475131
+    }
+  ],
+  "perm": "granted",
+  "level": "attention"
+}

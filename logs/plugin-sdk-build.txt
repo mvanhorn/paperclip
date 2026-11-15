@@ -1,0 +1,6 @@
+
+> @paperclipai/plugin-sdk@1.0.0 ensure-build-deps /workspace/packages/plugins/sdk
+> node ../../../scripts/ensure-plugin-build-deps.mjs
+
+[paperclip] Building @paperclipai/shared...
+[paperclip] Building @paperclipai/plugin-sdk...

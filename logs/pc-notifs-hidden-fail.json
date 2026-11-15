@@ -1,0 +1,28 @@
+[
+  {
+    "title": "Paperclip",
+    "options": {
+      "body": "Desktop notifications are on.",
+      "tag": "paperclip:desktop-notification-test",
+      "icon": "/favicon-32x32.png",
+      "data": {
+        "href": null
+      }
+    },
+    "vis": "visible",
+    "at": 1794767512447
+  },
+  {
+    "title": "Failing Runner run failed",
+    "options": {
+      "body": "Process exited with code 1",
+      "tag": "run-status:8f2ba7d7-412d-4f79-bfce-abc0a27594cd:failed",
+      "icon": "/favicon-32x32.png",
+      "data": {
+        "href": "/agents/badebfc6-b885-4875-86ee-f79bd5e0a7af/runs/8f2ba7d7-412d-4f79-bfce-abc0a27594cd"
+      }
+    },
+    "vis": "hidden",
+    "at": 1794767517003
+  }
+]

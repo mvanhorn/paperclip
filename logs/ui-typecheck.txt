@@ -1,0 +1,7 @@
+$ pnpm --filter @paperclipai/ui typecheck
+
+> @paperclipai/ui@0.3.1 typecheck /workspace/ui
+> node ../scripts/storybook-catalog.mjs && node ../scripts/run-tsc.mjs -b
+
+Storybook map: 360 files, 3303 stories. Structure only; no runtime proof.
+exit:0

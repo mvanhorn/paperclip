@@ -1,0 +1,16 @@
+# vitest focused after live-socket-while-hidden
+
+ RUN  v5.0.3 /workspace
+
+······················································································································
+
+ Test Files  5 passed (5)
+      Tests  118 passed (118)
+   Start at  18:15:17
+   Duration  4.46s (transform 38%, tests 26%, environment 19%, import 17%)
+
+  Transform  |@paperclipai/ui| transforming modules took 3.67s · 38% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+exit:0
